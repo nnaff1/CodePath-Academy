@@ -15,7 +15,6 @@ import {
   Bell,
   ChevronDown,
   ChevronRight,
-  ExternalLink,
   CheckCircle2,
   RotateCcw,
   X,
@@ -33,10 +32,10 @@ import {
   LogOut,
   TrendingUp,
   Clock,
-  AlertTriangle,
   ChevronLeft,
   BookMarked,
   Loader2,
+  ExternalLink,
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -79,6 +78,8 @@ interface PreReview {
   model: string;
 }
 
+type NavKey = 'overview' | 'courses' | 'builder' | 'submissions' | 'forum';
+
 // ─── Avatar helper ───────────────────────────────────────────────────────────
 
 const AVATAR_COLORS = [
@@ -89,40 +90,37 @@ const AVATAR_COLORS = [
   'bg-violet-100 text-violet-700',
 ];
 
-function getAvatarColor(name: string): string {
-  const idx = name.charCodeAt(0) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[idx];
+function getAvatarColor(name: string) {
+  return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+function getInitials(name: string) {
+  return name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase();
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 
-type NavKey = 'overview' | 'courses' | 'builder' | 'submissions' | 'forum';
-
-interface SidebarProps {
+function MentorSidebar({
+  activeNav,
+  setActiveNav,
+  pendingCount,
+  onLogout,
+}: {
   activeNav: NavKey;
   setActiveNav: (k: NavKey) => void;
   pendingCount: number;
   onLogout: () => void;
-}
-
-function MentorSidebar({ activeNav, setActiveNav, pendingCount, onLogout }: SidebarProps) {
+}) {
+  const { t } = useLanguage();
+  const md = t.mentorDashboard;
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const navItems: { key: NavKey; label: string; icon: React.ReactNode }[] = [
-    { key: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
-    { key: 'courses', label: 'My Courses', icon: <BookOpen size={18} /> },
-    { key: 'builder', label: 'Course Builder', icon: <Hammer size={18} /> },
-    { key: 'submissions', label: 'Student Submissions', icon: <ClipboardList size={18} /> },
-    { key: 'forum', label: 'Q&A Forum', icon: <MessageSquare size={18} /> },
+    { key: 'overview', label: md.nav.overview, icon: <LayoutDashboard size={18} /> },
+    { key: 'courses', label: md.nav.courses, icon: <BookOpen size={18} /> },
+    { key: 'builder', label: md.nav.builder, icon: <Hammer size={18} /> },
+    { key: 'submissions', label: md.nav.submissions, icon: <ClipboardList size={18} /> },
+    { key: 'forum', label: md.nav.forum, icon: <MessageSquare size={18} /> },
   ];
 
   return (
@@ -130,16 +128,16 @@ function MentorSidebar({ activeNav, setActiveNav, pendingCount, onLogout }: Side
       {/* Brand */}
       <div className="px-5 pt-5 pb-4 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#2563EB] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-[#2563EB] flex items-center justify-center flex-shrink-0">
             <Code size={14} className="text-white" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-[11px] font-bold text-[#0F172A] leading-none">CodePath</div>
             <div className="text-[9px] font-semibold tracking-widest text-[#2563EB] uppercase leading-none mt-0.5">
               ACADEMY
             </div>
           </div>
-          <span className="ml-auto text-[9px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+          <span className="ml-auto text-[9px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded flex-shrink-0">
             v2.4
           </span>
         </div>
@@ -148,29 +146,27 @@ function MentorSidebar({ activeNav, setActiveNav, pendingCount, onLogout }: Side
       {/* Section Label */}
       <div className="px-5 pt-4 pb-2">
         <span className="text-[9px] font-bold tracking-widest text-emerald-600 uppercase">
-          • INSTRUCTOR PORTAL
+          • {md.portalLabel}
         </span>
       </div>
 
       {/* Nav Items */}
-      <nav className="flex-1 px-3 space-y-0.5">
+      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
         {navItems.map(({ key, label, icon }) => {
           const isActive = activeNav === key;
           return (
             <button
               key={key}
               onClick={() => setActiveNav(key)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer ${
-                isActive
-                  ? 'bg-[#2563EB] text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer ${
+                isActive ? 'bg-[#2563EB] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
-              <span className={isActive ? 'text-white' : 'text-slate-400'}>{icon}</span>
-              <span className="flex-1 text-left truncate">{label}</span>
+              <span className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`}>{icon}</span>
+              <span className="flex-1 text-left truncate text-[13px]">{label}</span>
               {key === 'submissions' && pendingCount > 0 && (
                 <span
-                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center flex-shrink-0 ${
                     isActive ? 'bg-white/25 text-white' : 'bg-[#2563EB] text-white'
                   }`}
                 >
@@ -184,17 +180,17 @@ function MentorSidebar({ activeNav, setActiveNav, pendingCount, onLogout }: Side
 
       {/* Profile Card */}
       <div className="px-3 pb-4 pt-3 border-t border-slate-100 mt-2">
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors relative">
+        <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors relative">
           <div className="w-8 h-8 rounded-full bg-[#0F172A] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
             SW
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-slate-900 truncate">Sarah Wijaya</div>
-            <div className="text-xs text-slate-500 truncate">Lead Instructor</div>
+            <div className="text-xs text-slate-500 truncate">{md.leadInstructor}</div>
           </div>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+            className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer flex-shrink-0"
           >
             <MoreHorizontal size={16} />
           </button>
@@ -212,15 +208,15 @@ function MentorSidebar({ activeNav, setActiveNav, pendingCount, onLogout }: Side
                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                 >
                   <LogOut size={14} />
-                  Logout
+                  {md.logout}
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
         <div className="flex items-center gap-1.5 px-3 mt-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-semibold text-emerald-600">ACTIVE MENTOR</span>
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+          <span className="text-[10px] font-semibold text-emerald-600">{md.activeMentor}</span>
         </div>
       </div>
     </aside>
@@ -229,53 +225,50 @@ function MentorSidebar({ activeNav, setActiveNav, pendingCount, onLogout }: Side
 
 // ─── Top Header ───────────────────────────────────────────────────────────────
 
-interface HeaderProps {
-  activeNav: NavKey;
-}
-
-function TopHeader({ activeNav }: HeaderProps) {
-  const { language, setLanguage } = useLanguage();
+function TopHeader({ activeNav }: { activeNav: NavKey }) {
+  const { language, setLanguage, t } = useLanguage();
+  const md = t.mentorDashboard;
   const [hasNotif, setHasNotif] = useState(true);
 
   const navLabels: Record<NavKey, string> = {
-    overview: 'Overview',
-    courses: 'My Courses',
-    builder: 'Course Builder',
-    submissions: 'Curriculum & Cohort Console',
-    forum: 'Q&A Forum',
+    overview: md.nav.overview,
+    courses: md.nav.courses,
+    builder: md.nav.builder,
+    submissions: md.nav.submissions,
+    forum: md.nav.forum,
   };
 
   return (
-    <header className="fixed top-0 left-[220px] right-0 h-14 bg-white border-b border-slate-200 flex items-center px-6 gap-4 z-20">
+    <header className="fixed top-0 left-[220px] right-0 h-14 bg-white border-b border-slate-200 flex items-center px-4 gap-3 z-20">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-sm text-slate-500 flex-shrink-0">
-        <span className="text-slate-400">Instructor Portal</span>
-        <ChevronRight size={14} className="text-slate-300" />
-        <span className="font-semibold text-slate-700">{navLabels[activeNav]}</span>
+      <div className="flex items-center gap-1.5 text-sm text-slate-500 flex-shrink-0 min-w-0">
+        <span className="text-slate-400 hidden sm:block truncate">{md.breadcrumb}</span>
+        <ChevronRight size={14} className="text-slate-300 flex-shrink-0 hidden sm:block" />
+        <span className="font-semibold text-slate-700 truncate">{navLabels[activeNav]}</span>
       </div>
 
       {/* Office Hours Pill */}
-      <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium flex-shrink-0">
+      <div className="hidden lg:flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium flex-shrink-0">
         <Clock size={12} />
-        Office Hours at 4:00 PM EST
+        {md.officeHours}
       </div>
 
       {/* Search */}
-      <div className="flex-1 max-w-xs relative">
+      <div className="flex-1 max-w-xs relative hidden md:block">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
-          placeholder="Search code, students, labs..."
+          placeholder={md.searchPlaceholder}
           className="w-full pl-9 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
         />
       </div>
 
-      <div className="flex items-center gap-2 ml-auto">
+      <div className="flex items-center gap-2 ml-auto flex-shrink-0">
         {/* Language Toggle */}
         <div className="flex items-center bg-slate-100 rounded-full p-0.5 gap-0.5">
-          <Globe size={12} className="text-slate-400 ml-1.5" />
+          <Globe size={12} className="text-slate-400 ml-1.5 flex-shrink-0" />
           {(['en', 'id'] as const).map((lang) => (
-            <button
+            <motion.button
               key={lang}
               onClick={() => setLanguage(lang)}
               className={`relative px-2.5 py-1 rounded-full text-xs font-semibold transition-colors duration-200 cursor-pointer ${
@@ -283,7 +276,7 @@ function TopHeader({ activeNav }: HeaderProps) {
               }`}
             >
               {lang.toUpperCase()}
-            </button>
+            </motion.button>
           ))}
         </div>
 
@@ -299,10 +292,10 @@ function TopHeader({ activeNav }: HeaderProps) {
         </button>
 
         {/* Avatar */}
-        <button className="w-8 h-8 rounded-full bg-[#0F172A] flex items-center justify-center text-white text-xs font-bold cursor-pointer">
+        <button className="w-8 h-8 rounded-full bg-[#0F172A] flex items-center justify-center text-white text-xs font-bold cursor-pointer flex-shrink-0">
           SW
         </button>
-        <ChevronDown size={14} className="text-slate-400" />
+        <ChevronDown size={14} className="text-slate-400 hidden sm:block" />
       </div>
     </header>
   );
@@ -310,13 +303,18 @@ function TopHeader({ activeNav }: HeaderProps) {
 
 // ─── Review Drawer ────────────────────────────────────────────────────────────
 
-interface ReviewDrawerProps {
+function ReviewDrawer({
+  submission,
+  onClose,
+  onReviewed,
+}: {
   submission: Submission | null;
   onClose: () => void;
   onReviewed: (id: string, status: 'APPROVED' | 'REVISION', feedback: string) => void;
-}
+}) {
+  const { t } = useLanguage();
+  const dr = t.mentorDashboard.drawer;
 
-function ReviewDrawer({ submission, onClose, onReviewed }: ReviewDrawerProps) {
   const [feedback, setFeedback] = useState('');
   const [preReview, setPreReview] = useState<PreReview | null>(null);
   const [preReviewLoading, setPreReviewLoading] = useState(false);
@@ -328,7 +326,6 @@ function ReviewDrawer({ submission, onClose, onReviewed }: ReviewDrawerProps) {
     setFeedback('');
     setPreReview(null);
     setAction(null);
-    // Auto-fetch pre-review
     setPreReviewLoading(true);
     fetch('/api/sema-ai/pre-review', {
       method: 'POST',
@@ -341,9 +338,7 @@ function ReviewDrawer({ submission, onClose, onReviewed }: ReviewDrawerProps) {
       }),
     })
       .then((r) => r.json())
-      .then((d) => {
-        if (d.success) setPreReview(d.preReview);
-      })
+      .then((d) => { if (d.success) setPreReview(d.preReview); })
       .catch(console.warn)
       .finally(() => setPreReviewLoading(false));
   }, [submission]);
@@ -371,7 +366,6 @@ function ReviewDrawer({ submission, onClose, onReviewed }: ReviewDrawerProps) {
     <AnimatePresence>
       {submission && (
         <>
-          {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -379,18 +373,17 @@ function ReviewDrawer({ submission, onClose, onReviewed }: ReviewDrawerProps) {
             onClick={onClose}
             className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-40"
           />
-          {/* Drawer */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 h-screen w-[480px] bg-white border-l border-slate-200 shadow-2xl z-50 flex flex-col overflow-hidden"
+            className="fixed right-0 top-0 h-screen w-[480px] bg-white border-l border-slate-200 shadow-2xl z-50 flex flex-col"
           >
             {/* Drawer Header */}
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
               <div>
-                <div className="text-sm font-bold text-slate-900">Review Submission</div>
+                <div className="text-sm font-bold text-slate-900">{dr.title}</div>
                 <div className="text-xs text-slate-500 mt-0.5">{submission.studentName} · {submission.courseTitle}</div>
               </div>
               <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer">
@@ -401,9 +394,7 @@ function ReviewDrawer({ submission, onClose, onReviewed }: ReviewDrawerProps) {
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
               {/* Student Info */}
               <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${getAvatarColor(submission.studentName)}`}
-                >
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${getAvatarColor(submission.studentName)}`}>
                   {getInitials(submission.studentName)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -415,7 +406,7 @@ function ReviewDrawer({ submission, onClose, onReviewed }: ReviewDrawerProps) {
 
               {/* GitHub Link */}
               <div>
-                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">GitHub Repo</div>
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{dr.githubRepo}</div>
                 <a
                   href={submission.githubUrl}
                   target="_blank"
@@ -432,86 +423,74 @@ function ReviewDrawer({ submission, onClose, onReviewed }: ReviewDrawerProps) {
               <div className="border border-blue-100 rounded-xl overflow-hidden">
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 flex items-center gap-2 border-b border-blue-100">
                   <Sparkles size={14} className="text-[#2563EB]" />
-                  <span className="text-sm font-semibold text-[#2563EB]">Sema Co-Pilot Pre-Review</span>
+                  <span className="text-sm font-semibold text-[#2563EB]">{dr.semaTitle}</span>
                   <span className="ml-auto text-[10px] font-medium text-blue-400 bg-blue-100 px-2 py-0.5 rounded-full">
-                    AI Analysis
+                    {dr.semaAI}
                   </span>
                 </div>
                 <div className="p-4">
                   {preReviewLoading ? (
                     <div className="flex items-center gap-2 text-sm text-slate-500 py-3">
                       <Loader2 size={14} className="animate-spin text-[#2563EB]" />
-                      Sema AI is analyzing the submission...
+                      {dr.semaAnalyzing}
                     </div>
                   ) : preReview ? (
                     <div className="space-y-3">
-                      {/* Score */}
+                      {/* Score Bar */}
                       <div className="flex items-center gap-3">
                         <div className="text-2xl font-bold text-[#0F172A]">{preReview.suggestedScore}</div>
                         <div className="flex-1">
                           <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-700 ${
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${preReview.suggestedScore}%` }}
+                              transition={{ duration: 0.8, ease: 'easeOut' }}
+                              className={`h-full rounded-full ${
                                 preReview.suggestedScore >= 80 ? 'bg-emerald-500' : preReview.suggestedScore >= 60 ? 'bg-amber-500' : 'bg-rose-500'
                               }`}
-                              style={{ width: `${preReview.suggestedScore}%` }}
                             />
                           </div>
-                          <div className="text-[10px] text-slate-400 mt-0.5">Suggested Score / 100</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">{dr.suggestedScore}</div>
                         </div>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-1 rounded-full ${
-                            preReview.verdict === 'APPROVE'
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : 'bg-amber-100 text-amber-700'
-                          }`}
-                        >
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+                          preReview.verdict === 'APPROVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
                           {preReview.verdict === 'APPROVE' ? 'APPROVE' : 'REVISION'}
                         </span>
                       </div>
 
-                      {/* Strengths */}
                       {preReview.strengths.length > 0 && (
                         <div>
-                          <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5">
-                            ✓ Strengths
-                          </div>
+                          <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5">{dr.strengths}</div>
                           <ul className="space-y-1">
                             {preReview.strengths.map((s, i) => (
                               <li key={i} className="text-xs text-slate-600 flex gap-2">
-                                <span className="text-emerald-500 flex-shrink-0 mt-0.5">•</span>
-                                {s}
+                                <span className="text-emerald-500 flex-shrink-0 mt-0.5">•</span>{s}
                               </li>
                             ))}
                           </ul>
                         </div>
                       )}
 
-                      {/* Warnings */}
                       {preReview.warnings.length > 0 && (
                         <div>
-                          <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1.5">
-                            ⚠ Areas to Improve
-                          </div>
+                          <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1.5">{dr.warnings}</div>
                           <ul className="space-y-1">
                             {preReview.warnings.map((w, i) => (
                               <li key={i} className="text-xs text-slate-600 flex gap-2">
-                                <span className="text-amber-500 flex-shrink-0 mt-0.5">•</span>
-                                {w}
+                                <span className="text-amber-500 flex-shrink-0 mt-0.5">•</span>{w}
                               </li>
                             ))}
                           </ul>
                         </div>
                       )}
 
-                      {/* Mentor Note */}
                       {preReview.mentorNote && (
                         <div className="bg-slate-50 rounded-lg px-3 py-2 text-xs text-slate-600 italic border border-slate-200">
-                          <span className="font-semibold not-italic text-slate-700">Sema suggests: </span>
+                          <span className="font-semibold not-italic text-slate-700">{dr.semaSuggests}</span>
                           {preReview.mentorNote}
                         </div>
                       )}
-
                       <div className="text-[9px] text-slate-400">Model: {preReview.model}</div>
                     </div>
                   ) : (
@@ -520,15 +499,13 @@ function ReviewDrawer({ submission, onClose, onReviewed }: ReviewDrawerProps) {
                 </div>
               </div>
 
-              {/* Feedback Textarea */}
+              {/* Feedback */}
               <div>
-                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2 block">
-                  Mentor Feedback
-                </label>
+                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2 block">{dr.feedbackLabel}</label>
                 <textarea
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
-                  placeholder="Leave constructive feedback for the student..."
+                  placeholder={dr.feedbackPlaceholder}
                   rows={4}
                   className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 resize-none"
                 />
@@ -543,7 +520,7 @@ function ReviewDrawer({ submission, onClose, onReviewed }: ReviewDrawerProps) {
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {submitting && action === 'REVISION' ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
-                Request Revision
+                {dr.requestRevision}
               </button>
               <button
                 onClick={() => handleSubmit('APPROVED')}
@@ -551,7 +528,7 @@ function ReviewDrawer({ submission, onClose, onReviewed }: ReviewDrawerProps) {
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-[#2563EB] hover:bg-blue-700 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {submitting && action === 'APPROVED' ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                Approve & Award XP
+                {dr.approve}
               </button>
             </div>
           </motion.div>
@@ -563,63 +540,72 @@ function ReviewDrawer({ submission, onClose, onReviewed }: ReviewDrawerProps) {
 
 // ─── Submissions Table ────────────────────────────────────────────────────────
 
-interface SubmissionsTableProps {
+function SubmissionsTable({
+  submissions,
+  loading,
+  onReviewClick,
+}: {
   submissions: Submission[];
   loading: boolean;
   onReviewClick: (s: Submission) => void;
-}
+}) {
+  const { t } = useLanguage();
+  const sub = t.mentorDashboard.submissions;
 
-function SubmissionsTable({ submissions, loading, onReviewClick }: SubmissionsTableProps) {
   const [search, setSearch] = useState('');
-  const [moduleFilter, setModuleFilter] = useState('All Modules');
+  const [moduleFilter, setModuleFilter] = useState('');
   const [page, setPage] = useState(1);
   const PER_PAGE = 5;
+
+  const courses = Array.from(new Set(submissions.map((s) => s.courseTitle)));
 
   const filtered = submissions.filter((s) => {
     const matchSearch =
       s.studentName.toLowerCase().includes(search.toLowerCase()) ||
       s.studentEmail.toLowerCase().includes(search.toLowerCase());
-    const matchModule = moduleFilter === 'All Modules' || s.courseTitle.includes(moduleFilter);
+    const matchModule = !moduleFilter || s.courseTitle === moduleFilter;
     return matchSearch && matchModule;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-  const courses = Array.from(new Set(submissions.map((s) => s.courseTitle)));
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, moduleFilter]);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-slate-200 flex items-center gap-3">
-        <div>
-          <div className="font-bold text-slate-900 text-base">Student Submissions</div>
+      {/* ── Header ── */}
+      <div className="px-5 py-4 border-b border-slate-200">
+        {/* Row 1: title + badge */}
+        <div className="flex items-center gap-3 mb-3">
+          <div className="font-bold text-slate-900 text-base leading-tight">{sub.title}</div>
+          <span className="inline-flex items-center justify-center bg-[#2563EB] text-white text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0">
+            {submissions.length} {sub.awaiting}
+          </span>
         </div>
-        <span className="bg-[#2563EB] text-white text-xs font-bold px-2.5 py-1 rounded-full">
-          {submissions.length} Awaiting
-        </span>
-        <div className="flex-1" />
-        {/* Search */}
-        <div className="relative">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Filter student..."
-            className="pl-8 pr-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 w-36"
-          />
-        </div>
-        {/* Module Filter */}
-        <div className="relative">
-          <select
-            value={moduleFilter}
-            onChange={(e) => { setModuleFilter(e.target.value); setPage(1); }}
-            className="appearance-none pl-3 pr-8 py-1.5 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 cursor-pointer"
-          >
-            <option>All Modules</option>
-            {courses.map((c) => <option key={c}>{c}</option>)}
-          </select>
-          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        {/* Row 2: search + filter */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative flex-1 min-w-[140px]">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={sub.filterPlaceholder}
+              className="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+            />
+          </div>
+          <div className="relative">
+            <select
+              value={moduleFilter}
+              onChange={(e) => setModuleFilter(e.target.value)}
+              className="appearance-none pl-3 pr-8 py-1.5 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 cursor-pointer"
+            >
+              <option value="">{sub.allModules}</option>
+              {courses.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
         </div>
       </div>
 
@@ -628,16 +614,10 @@ function SubmissionsTable({ submissions, loading, onReviewClick }: SubmissionsTa
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/60">
-              <th className="text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider px-5 py-3">
-                Student Name
-              </th>
-              <th className="text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider px-4 py-3">
-                Course & Module
-              </th>
-              <th className="text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider px-4 py-3">
-                GitHub Repo
-              </th>
-              <th className="px-4 py-3" />
+              <th className="text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{sub.colStudent}</th>
+              <th className="text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider px-4 py-3 whitespace-nowrap">{sub.colCourse}</th>
+              <th className="text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider px-4 py-3 whitespace-nowrap">{sub.colRepo}</th>
+              <th className="px-4 py-3 w-10" />
             </tr>
           </thead>
           <tbody>
@@ -645,14 +625,12 @@ function SubmissionsTable({ submissions, loading, onReviewClick }: SubmissionsTa
               <tr>
                 <td colSpan={4} className="text-center py-12 text-slate-400 text-sm">
                   <Loader2 size={20} className="animate-spin mx-auto mb-2" />
-                  Loading submissions...
+                  {sub.loading}
                 </td>
               </tr>
             ) : paged.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center py-12 text-slate-400 text-sm">
-                  No pending submissions found.
-                </td>
+                <td colSpan={4} className="text-center py-12 text-slate-400 text-sm">{sub.empty}</td>
               </tr>
             ) : (
               paged.map((s, i) => (
@@ -665,19 +643,17 @@ function SubmissionsTable({ submissions, loading, onReviewClick }: SubmissionsTa
                 >
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${getAvatarColor(s.studentName)}`}
-                      >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${getAvatarColor(s.studentName)}`}>
                         {getInitials(s.studentName)}
                       </div>
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">{s.studentName}</div>
-                        <div className="text-xs text-slate-400">{s.studentEmail}</div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-slate-900 truncate">{s.studentName}</div>
+                        <div className="text-xs text-slate-400 truncate">{s.studentEmail}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3.5">
-                    <div className="text-sm font-medium text-slate-800 leading-snug">{s.courseTitle}</div>
+                    <div className="text-sm font-medium text-slate-800 leading-snug truncate max-w-[180px]">{s.courseTitle}</div>
                     <div className="text-xs text-slate-400 mt-0.5 truncate max-w-[180px]">{s.chapterTitle}</div>
                   </td>
                   <td className="px-4 py-3.5">
@@ -695,9 +671,9 @@ function SubmissionsTable({ submissions, loading, onReviewClick }: SubmissionsTa
                   <td className="px-4 py-3.5">
                     <button
                       onClick={() => onReviewClick(s)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-[#2563EB] hover:bg-blue-50 px-3 py-1.5 rounded-lg cursor-pointer"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-[#2563EB] hover:bg-blue-50 px-3 py-1.5 rounded-lg cursor-pointer whitespace-nowrap"
                     >
-                      Review →
+                      {sub.reviewBtn}
                     </button>
                   </td>
                 </motion.tr>
@@ -708,9 +684,9 @@ function SubmissionsTable({ submissions, loading, onReviewClick }: SubmissionsTa
       </div>
 
       {/* Pagination */}
-      <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/40">
+      <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/40 flex-wrap gap-2">
         <span className="text-xs text-slate-500">
-          Showing {Math.min(paged.length, PER_PAGE)} of {filtered.length} total cohort submissions
+          {sub.showing} {Math.min(paged.length + (page - 1) * PER_PAGE, filtered.length)} {sub.of} {filtered.length} {sub.totalSuffix}
         </span>
         <div className="flex items-center gap-1">
           <button
@@ -746,13 +722,12 @@ function SubmissionsTable({ submissions, loading, onReviewClick }: SubmissionsTa
 
 // ─── Lesson Builder ───────────────────────────────────────────────────────────
 
-interface LessonBuilderProps {
-  courses: CourseWithChapters[];
-}
+function LessonBuilder({ courses }: { courses: CourseWithChapters[] }) {
+  const { t } = useLanguage();
+  const bd = t.mentorDashboard.builder;
 
-function LessonBuilder({ courses }: LessonBuilderProps) {
-  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
-  const [selectedChapterId, setSelectedChapterId] = useState<string>('');
+  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [selectedChapterId, setSelectedChapterId] = useState('');
   const [lessonTitle, setLessonTitle] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [assignmentPrompt, setAssignmentPrompt] = useState('');
@@ -765,37 +740,22 @@ function LessonBuilder({ courses }: LessonBuilderProps) {
   const selectedCourse = courses.find((c) => c.id === selectedCourseId);
   const chapters = selectedCourse?.chapters ?? [];
 
-  const autoSelectFirstChapter = useCallback((courseId: string) => {
-    const c = courses.find((c) => c.id === courseId);
-    if (c?.chapters.length) setSelectedChapterId(c.chapters[0].id);
-  }, [courses]);
-
   const handleAutoDraft = async () => {
-    if (!lessonTitle.trim()) {
-      alert('Enter a lesson topic/title first for Sema AI to draft.');
-      return;
-    }
+    if (!lessonTitle.trim()) { alert('Enter a lesson topic/title first.'); return; }
     setDrafting(true);
     try {
       const res = await fetch('/api/sema-ai/draft-lesson', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic: lessonTitle,
-          courseTitle: selectedCourse?.title,
-          courseSlug: selectedCourse?.slug,
-        }),
+        body: JSON.stringify({ topic: lessonTitle, courseTitle: selectedCourse?.title, courseSlug: selectedCourse?.slug }),
       });
       const data = await res.json();
       if (data.success && data.draft) {
         setLessonTitle(data.draft.lessonTitle || lessonTitle);
         setAssignmentPrompt(data.draft.assignmentPrompt || '');
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setDrafting(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setDrafting(false); }
   };
 
   const handleSave = async (asDraft = false) => {
@@ -808,43 +768,30 @@ function LessonBuilder({ courses }: LessonBuilderProps) {
       const res = await fetch('/api/mentor/lessons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chapterId: selectedChapterId,
-          title: lessonTitle,
-          videoUrl: videoUrl || null,
-          content: assignmentPrompt,
-        }),
+        body: JSON.stringify({ chapterId: selectedChapterId, title: lessonTitle, videoUrl: videoUrl || null, content: assignmentPrompt }),
       });
       const data = await res.json();
       if (data.success) {
         setSaveStatus(asDraft ? 'draft' : 'saved');
         setTimeout(() => setSaveStatus('idle'), 3000);
-        if (!asDraft) {
-          setLessonTitle('');
-          setVideoUrl('');
-          setAssignmentPrompt('');
-        }
+        if (!asDraft) { setLessonTitle(''); setVideoUrl(''); setAssignmentPrompt(''); }
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setSaving(false); }
   };
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs">
-      {/* Header */}
       <div className="px-5 py-4 border-b border-slate-200 flex items-center gap-2">
-        <BookMarked size={16} className="text-slate-500" />
-        <div className="font-bold text-slate-900 text-sm flex-1">Add New Lesson</div>
-        <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+        <BookMarked size={16} className="text-slate-500 flex-shrink-0" />
+        <div className="font-bold text-slate-900 text-sm flex-1">{bd.title}</div>
+        <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full flex-shrink-0">
           Next.js 15
         </span>
       </div>
 
       <div className="px-5 py-4 space-y-4">
-        <p className="text-xs text-slate-500">Draft and stage new curriculum modules into your active syllabus.</p>
+        <p className="text-xs text-slate-500">{bd.subtitle}</p>
 
         {/* Auto-Draft Button */}
         <button
@@ -852,42 +799,36 @@ function LessonBuilder({ courses }: LessonBuilderProps) {
           disabled={drafting}
           className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm disabled:opacity-70 cursor-pointer"
         >
-          {drafting ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : (
-            <Sparkles size={14} />
-          )}
-          {drafting ? 'Sema AI is drafting...' : '✨ Auto-Draft Lesson with Sema AI'}
+          {drafting ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+          {drafting ? bd.drafting : bd.autoDraft}
         </button>
 
-        {/* Course Select */}
+        {/* Course */}
         <div>
-          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Course</label>
+          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">{bd.courseLabel}</label>
           <div className="relative">
             <select
               value={selectedCourseId}
               onChange={(e) => {
                 setSelectedCourseId(e.target.value);
-                setSelectedChapterId('');
-                autoSelectFirstChapter(e.target.value);
+                const c = courses.find((c) => c.id === e.target.value);
+                setSelectedChapterId(c?.chapters[0]?.id ?? '');
               }}
               className="w-full appearance-none border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 pr-8 cursor-pointer"
             >
-              <option value="">Select a course...</option>
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>{c.title}</option>
-              ))}
+              <option value="">{bd.courseSelect}</option>
+              {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
             </select>
             <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
         </div>
 
-        {/* Chapter Placement */}
+        {/* Chapter */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-semibold text-slate-700">Chapter Placement</label>
+            <label className="text-xs font-semibold text-slate-700">{bd.chapterLabel}</label>
             <button className="flex items-center gap-1 text-[11px] font-semibold text-[#2563EB] hover:text-blue-700 cursor-pointer">
-              <PlusCircle size={11} /> New Chapter
+              <PlusCircle size={11} /> {bd.newChapter}
             </button>
           </div>
           <div className="relative">
@@ -897,14 +838,8 @@ function LessonBuilder({ courses }: LessonBuilderProps) {
               disabled={chapters.length === 0}
               className="w-full appearance-none border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 pr-8 disabled:opacity-50 cursor-pointer"
             >
-              <option value="">
-                {chapters.length === 0 ? 'Select course first...' : 'Select chapter...'}
-              </option>
-              {chapters.map((ch) => (
-                <option key={ch.id} value={ch.id}>
-                  Chapter {ch.order}: {ch.title}
-                </option>
-              ))}
+              <option value="">{chapters.length === 0 ? bd.chapterSelectFirst : bd.chapterSelect}</option>
+              {chapters.map((ch) => <option key={ch.id} value={ch.id}>Chapter {ch.order}: {ch.title}</option>)}
             </select>
             <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
@@ -912,22 +847,22 @@ function LessonBuilder({ courses }: LessonBuilderProps) {
 
         {/* Lesson Title */}
         <div>
-          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Lesson Title</label>
+          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">{bd.lessonTitle}</label>
           <input
             value={lessonTitle}
             onChange={(e) => setLessonTitle(e.target.value)}
-            placeholder="e.g. Optimistic UI Updates with useActionState"
+            placeholder={bd.lessonPlaceholder}
             className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
           />
         </div>
 
         {/* Video URL */}
         <div>
-          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Video Lecture Embed URL</label>
+          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">{bd.videoLabel}</label>
           <input
             value={videoUrl}
             onChange={(e) => setVideoUrl(e.target.value)}
-            placeholder="https://player.vimeo.com/video/..."
+            placeholder={bd.videoPlaceholder}
             className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
           />
         </div>
@@ -935,7 +870,7 @@ function LessonBuilder({ courses }: LessonBuilderProps) {
         {/* Assignment Prompt */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-semibold text-slate-700">Assignment Prompt & Rubric</label>
+            <label className="text-xs font-semibold text-slate-700">{bd.promptLabel}</label>
             <div className="flex gap-1">
               <button className="p-1 hover:bg-slate-100 rounded text-slate-500 cursor-pointer"><Bold size={11} /></button>
               <button className="p-1 hover:bg-slate-100 rounded text-slate-500 cursor-pointer"><Italic size={11} /></button>
@@ -945,7 +880,7 @@ function LessonBuilder({ courses }: LessonBuilderProps) {
           <textarea
             value={assignmentPrompt}
             onChange={(e) => setAssignmentPrompt(e.target.value)}
-            placeholder="Implement optimistic cart item deletion and handle edge rollback when server action fails with 500 error status."
+            placeholder={bd.promptPlaceholder}
             rows={4}
             className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 resize-none font-mono text-xs"
           />
@@ -954,17 +889,17 @@ function LessonBuilder({ courses }: LessonBuilderProps) {
         {/* Checkboxes */}
         <div className="space-y-2.5">
           {[
-            { label: 'Attach Starter Repo Template', state: attachStarter, setter: setAttachStarter },
-            { label: 'Mandatory for Cohort Completion', state: mandatory, setter: setMandatory },
+            { label: bd.attachStarter, state: attachStarter, setter: setAttachStarter },
+            { label: bd.mandatory, state: mandatory, setter: setMandatory },
           ].map(({ label, state, setter }) => (
-            <label key={label} className="flex items-center gap-3 cursor-pointer group">
+            <label key={label} className="flex items-center gap-3 cursor-pointer">
               <div className="flex-1 text-xs text-slate-700 flex items-center gap-2">
-                <BookOpen size={12} className="text-slate-400" />
-                {label}
+                <BookOpen size={12} className="text-slate-400 flex-shrink-0" />
+                <span className="truncate">{label}</span>
               </div>
               <div
                 onClick={() => setter(!state)}
-                className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors cursor-pointer ${
+                className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors cursor-pointer flex-shrink-0 ${
                   state ? 'bg-[#2563EB] border-[#2563EB]' : 'border-slate-300 hover:border-blue-400'
                 }`}
               >
@@ -974,7 +909,7 @@ function LessonBuilder({ courses }: LessonBuilderProps) {
           ))}
         </div>
 
-        {/* Save Status */}
+        {/* Save Status Toast */}
         <AnimatePresence>
           {saveStatus !== 'idle' && (
             <motion.div
@@ -986,29 +921,27 @@ function LessonBuilder({ courses }: LessonBuilderProps) {
               }`}
             >
               <CheckCircle2 size={12} />
-              {saveStatus === 'saved' ? 'Lesson staged to curriculum!' : 'Saved as draft.'}
+              {saveStatus === 'saved' ? bd.savedMsg : bd.draftMsg}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Save & Stage */}
         <button
           onClick={() => handleSave(false)}
           disabled={saving}
           className="w-full flex items-center justify-center gap-2 py-3 bg-[#0F172A] hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-60 cursor-pointer"
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <SendHorizontal size={14} />}
-          Save & Stage to Curriculum
+          {bd.saveStage}
         </button>
 
-        {/* Save Draft */}
         <button
           onClick={() => handleSave(true)}
           disabled={saving}
           className="w-full flex items-center justify-center gap-2 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-xl transition-colors disabled:opacity-60 cursor-pointer"
         >
           <Save size={13} />
-          Save Draft
+          {bd.saveDraft}
         </button>
       </div>
     </div>
@@ -1018,35 +951,31 @@ function LessonBuilder({ courses }: LessonBuilderProps) {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function MentorDashboard() {
+  const { t } = useLanguage();
+  const md = t.mentorDashboard;
+
   const [activeNav, setActiveNav] = useState<NavKey>('submissions');
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(true);
   const [courses, setCourses] = useState<CourseWithChapters[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 
-  // Fetch submissions
   const fetchSubmissions = useCallback(async () => {
     setSubmissionsLoading(true);
     try {
       const res = await fetch('/api/mentor/submissions');
       const data = await res.json();
       if (data.success) setSubmissions(data.submissions);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSubmissionsLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setSubmissionsLoading(false); }
   }, []);
 
-  // Fetch courses for lesson builder
   const fetchCourses = useCallback(async () => {
     try {
       const res = await fetch('/api/mentor/lessons');
       const data = await res.json();
       if (data.success) setCourses(data.courses ?? []);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   }, []);
 
   useEffect(() => {
@@ -1054,7 +983,7 @@ export default function MentorDashboard() {
     fetchCourses();
   }, [fetchSubmissions, fetchCourses]);
 
-  const handleReviewed = (id: string, _status: string, _feedback: string) => {
+  const handleReviewed = (id: string) => {
     setSubmissions((prev) => prev.filter((s) => s.id !== id));
   };
 
@@ -1063,9 +992,6 @@ export default function MentorDashboard() {
     window.location.href = '/';
   };
 
-  // KPI stats
-  const totalEnrolled = 1240;
-  const pendingPRs = submissions.length;
   const ratingScore = 4.9;
 
   return (
@@ -1078,7 +1004,6 @@ export default function MentorDashboard() {
       />
       <TopHeader activeNav={activeNav} />
 
-      {/* Main Content */}
       <main className="ml-[220px] pt-14 min-h-screen">
         <div className="p-6 space-y-5 max-w-[1200px]">
 
@@ -1087,38 +1012,36 @@ export default function MentorDashboard() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 flex items-center gap-6"
+            className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 flex flex-wrap items-center gap-4"
           >
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-1.5">
-                <h1 className="text-xl font-bold text-[#0F172A]">Welcome back, Sarah 👋</h1>
-                <span className="text-xs font-semibold bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full">
-                  FALL &#39;24 COHORT
+            <div className="flex-1 min-w-[220px]">
+              <div className="flex items-center gap-3 mb-1.5 flex-wrap">
+                <h1 className="text-xl font-bold text-[#0F172A]">{md.welcome}</h1>
+                <span className="text-xs font-semibold bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full whitespace-nowrap">
+                  {md.cohort}
                 </span>
               </div>
-              <p className="text-sm text-slate-500">
-                Here is what&#39;s happening across your active cohorts and pending code reviews today.
-              </p>
+              <p className="text-sm text-slate-500">{md.welcomeSub}</p>
             </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <button className="flex items-center gap-2 px-4 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+            <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
+              <button className="flex items-center gap-2 px-4 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap">
                 <Download size={14} />
-                Export Gradebook
+                {md.exportGradebook}
               </button>
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-[#2563EB] hover:bg-blue-700 rounded-xl text-sm font-semibold text-white transition-colors cursor-pointer">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-[#2563EB] hover:bg-blue-700 rounded-xl text-sm font-semibold text-white transition-colors cursor-pointer whitespace-nowrap">
                 <RefreshCw size={14} />
-                Sync GitHub Classrooms
+                {md.syncGitHub}
               </button>
             </div>
           </motion.div>
 
           {/* KPI Stats Row */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               {
-                label: 'TOTAL ENROLLED STUDENTS',
-                value: totalEnrolled.toLocaleString(),
-                sub: 'this month across 3 active cohorts',
+                label: md.kpi.enrolled,
+                value: '1,240',
+                sub: md.kpi.enrolledSub,
                 badge: '+12%',
                 badgeColor: 'bg-emerald-100 text-emerald-700',
                 icon: <Users size={20} className="text-[#2563EB]" />,
@@ -1126,28 +1049,21 @@ export default function MentorDashboard() {
                 delay: 0.1,
               },
               {
-                label: 'PENDING CODE REVIEWS',
-                value: `${pendingPRs}`,
-                valueSub: 'PRs in queue',
-                sub: `Requires review within 24h • ${Math.min(pendingPRs, 2)} high priority`,
-                subIcon: <span className="w-2 h-2 rounded-full bg-amber-400 inline-block mr-1" />,
+                label: md.kpi.reviews,
+                value: `${submissions.length}`,
+                valueSub: md.kpi.reviewsQueue,
+                sub: `${md.kpi.reviewsSub} • ${Math.min(submissions.length, 2)} ${md.kpi.highPriority}`,
+                subDot: true,
                 icon: <GitPullRequest size={20} className="text-slate-600" />,
                 iconBg: 'bg-slate-100',
                 delay: 0.15,
               },
               {
-                label: 'INSTRUCTOR EFFECTIVENESS',
+                label: md.kpi.effectiveness,
                 value: ratingScore.toFixed(1),
                 valueSub: '/5.0',
-                sub: '384 ratings (98% positive)',
-                subIcon: (
-                  <div className="flex gap-0.5 mr-1">
-                    {[1, 2, 3, 4].map((i) => (
-                      <Star key={i} size={10} className="text-amber-400 fill-amber-400" />
-                    ))}
-                    <Star size={10} className="text-amber-300 fill-amber-100" />
-                  </div>
-                ),
+                sub: `384 ${md.kpi.effectivenessSub}`,
+                subStars: true,
                 icon: <Star size={20} className="text-[#2563EB]" />,
                 iconBg: 'bg-blue-100',
                 delay: 0.2,
@@ -1165,17 +1081,27 @@ export default function MentorDashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{kpi.label}</div>
-                  <div className="flex items-baseline gap-1">
+                  <div className="flex items-baseline gap-1 flex-wrap">
                     <div className="text-3xl font-bold text-[#0F172A] leading-none">{kpi.value}</div>
-                    {kpi.valueSub && <div className="text-sm text-slate-500 font-semibold">{kpi.valueSub}</div>}
+                    {'valueSub' in kpi && kpi.valueSub && (
+                      <div className="text-sm text-slate-500 font-semibold">{kpi.valueSub}</div>
+                    )}
                     {'badge' in kpi && kpi.badge && (
-                      <span className={`ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${kpi.badgeColor}`}>
+                      <span className={`ml-1 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${kpi.badgeColor}`}>
                         <TrendingUp size={9} /> {kpi.badge}
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-slate-500 mt-1.5 flex items-center">
-                    {kpi.subIcon}
+                  <div className="text-xs text-slate-500 mt-1.5 flex items-center gap-1 flex-wrap">
+                    {'subDot' in kpi && kpi.subDot && (
+                      <span className="w-2 h-2 rounded-full bg-amber-400 inline-block flex-shrink-0" />
+                    )}
+                    {'subStars' in kpi && kpi.subStars && (
+                      <div className="flex gap-0.5">
+                        {[1,2,3,4].map((j) => <Star key={j} size={10} className="text-amber-400 fill-amber-400" />)}
+                        <Star size={10} className="text-amber-300 fill-amber-100" />
+                      </div>
+                    )}
                     {kpi.sub}
                   </div>
                 </div>
@@ -1183,27 +1109,23 @@ export default function MentorDashboard() {
             ))}
           </div>
 
-          {/* Main Workspace: Submissions (65%) + Lesson Builder (35%) */}
+          {/* Main Workspace */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.4 }}
-            className="grid grid-cols-[1fr_340px] gap-5 items-start"
+            className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-5 items-start"
           >
-            {/* Submissions Table */}
             <SubmissionsTable
               submissions={submissions}
               loading={submissionsLoading}
               onReviewClick={setSelectedSubmission}
             />
-
-            {/* Lesson Builder */}
             <LessonBuilder courses={courses} />
           </motion.div>
         </div>
       </main>
 
-      {/* Review Drawer */}
       <ReviewDrawer
         submission={selectedSubmission}
         onClose={() => setSelectedSubmission(null)}

@@ -78,3 +78,4 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Failed to update submission.' }, { status: 500 });
   }
 }
+
