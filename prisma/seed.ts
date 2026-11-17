@@ -53,11 +53,11 @@ async function main() {
 
   const student = await prisma.user.create({
     data: {
-      name: 'Alex Pratama',
+      name: 'Affando Fathinatha',
       email: 'student@codepath.id',
       password: hashedPassword,
       role: 'USER',
-      xpPoints: 1250,
+      xpPoints: 1450,
     },
   });
 
@@ -110,7 +110,7 @@ async function main() {
             },
           },
           {
-            title: 'Relational Database & Production Deployment',
+            title: 'SERVER ACTIONS & DATABASE MUTATIONS',
             order: 2,
             lessons: {
               create: [
@@ -125,14 +125,14 @@ async function main() {
                     'Define foreign key fields such as courseId String and link with @relation(fields: [courseId], references: [id]).',
                 },
                 {
-                  title: 'Dockerizing Next.js for Cloud Staging',
+                  title: 'Optimistic UI Updates with useActionState',
                   order: 2,
                   content:
-                    'Create multi-stage Docker builds optimizing image size down to < 100MB with Next.js standalone output mode.',
+                    'Master optimistic UI rollbacks using React 19 useActionState and useOptimistic with Next.js 15 Server Actions.',
                   starterCode:
-                    'FROM node:20-alpine AS base\nWORKDIR /app\n# TODO: Multi-stage build steps',
+                    "import { useActionState, useOptimistic } from 'react';\nimport { updateCartQuantity } from '@/app/actions';\n\n// Action state hook managing server pending transitions\nexport function CartManager({ initialCount }: { initialCount: number }) {\n  const [state, formAction, isPending] =\n    useActionState(updateCartQuantity, { count: initialCount });\n  const [optimisticCount, setOptimisticCount] = useOptimistic(\n    state.count,\n    (current, newTotal: number) => newTotal\n  );\n\n  return (\n    <div className=\"flex items-center gap-4\">\n      <span>Items in Cart: {optimisticCount}</span>\n      {isPending && <span className=\"animate-spin\">⏳</span>}\n    </div>\n  );\n}",
                   solutionHint:
-                    'Use output: "standalone" in next.config.ts and copy only .next/standalone and public folders into the final image.',
+                    'Notice the execution order between your optimistic state mutation and the resolved action payload. If initialCount is undefined on mount, hydration defaults to 0 before DB.',
                 },
               ],
             },
@@ -260,32 +260,55 @@ async function main() {
     },
   });
 
-  console.log('📚 4 Courses seeded with chapters and lessons:');
+  // Course 5: Algorithmic Systems & Data Structures
+  const course5 = await prisma.course.create({
+    data: {
+      mentorId: mentor1.id,
+      title: 'Algorithmic Systems',
+      slug: 'algorithmic-systems',
+      description:
+        'Advanced graph algorithms, distributed consensus, algorithmic optimization, and competitive interview patterns in Go and TypeScript.',
+      level: 'ADVANCED',
+      price: 329000,
+      status: 'PUBLISHED',
+      chapters: {
+        create: [
+          {
+            title: 'Graph Traversal & Dynamic Programming',
+            order: 1,
+            lessons: {
+              create: [
+                {
+                  title: 'Topological Sort & Dependency Resolution',
+                  order: 1,
+                  content: 'Implement cycle detection and DAG topological sorting for build dependency resolution.',
+                  starterCode: 'export function topologicalSort(graph: Map<string, string[]>): string[] {\n  return [];\n}',
+                  solutionHint: 'Use Kahn algorithm with indegree tracking.',
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  console.log('📚 5 Courses seeded with chapters and lessons:');
   console.log(` - ${course1.title} (${course1.slug})`);
   console.log(` - ${course2.title} (${course2.slug})`);
   console.log(` - ${course3.title} (${course3.slug})`);
   console.log(` - ${course4.title} (${course4.slug})`);
+  console.log(` - ${course5.title} (${course5.slug})`);
 
   // 4. Create Completed Enrollments and Certificates
-  // Enrollment 1 for student -> Course 1 (Completed 100%)
+  // Enrollment 1 for student -> Course 1 (In Progress 78%)
   const enrollment1 = await prisma.enrollment.create({
     data: {
       userId: student.id,
       courseId: course1.id,
       paymentStatus: 'PAID',
-      progressPercent: 100,
-      completedAt: new Date('2026-02-15T10:00:00Z'),
-    },
-  });
-
-  // Certificate 1: CP-2026-889
-  const cert1 = await prisma.certificate.create({
-    data: {
-      enrollmentId: enrollment1.id,
-      certificateCode: 'CP-2026-889',
-      grade: 'Distinction',
-      score: 98.4,
-      issuedAt: new Date('2026-02-15T10:00:00Z'),
+      progressPercent: 78,
+      completedAt: null,
     },
   });
 
@@ -300,7 +323,7 @@ async function main() {
     },
   });
 
-  // Certificate 2: CP-2026-104
+  // Certificate 2: CP-2026-104 (Backend Microservices)
   const cert2 = await prisma.certificate.create({
     data: {
       enrollmentId: enrollment2.id,
@@ -311,14 +334,47 @@ async function main() {
     },
   });
 
-  // Enrollment 3 for student -> Course 3 (In Progress 45%)
-  await prisma.enrollment.create({
+  // Enrollment 3 for student -> Course 3 (In Progress 70%)
+  const enrollment3 = await prisma.enrollment.create({
     data: {
       userId: student.id,
       courseId: course3.id,
       paymentStatus: 'PAID',
-      progressPercent: 45,
+      progressPercent: 70,
       completedAt: null,
+    },
+  });
+
+  // Enrollment 4 for student -> Course 4 (In Progress 68%)
+  const enrollment4 = await prisma.enrollment.create({
+    data: {
+      userId: student.id,
+      courseId: course4.id,
+      paymentStatus: 'PAID',
+      progressPercent: 68,
+      completedAt: null,
+    },
+  });
+
+  // Enrollment 5 for student -> Course 5 (Completed 100%)
+  const enrollment5 = await prisma.enrollment.create({
+    data: {
+      userId: student.id,
+      courseId: course5.id,
+      paymentStatus: 'PAID',
+      progressPercent: 100,
+      completedAt: new Date('2026-02-15T10:00:00Z'),
+    },
+  });
+
+  // Certificate 1: CP-2026-889 (Algorithmic Systems)
+  const cert1 = await prisma.certificate.create({
+    data: {
+      enrollmentId: enrollment5.id,
+      certificateCode: 'CP-2026-889',
+      grade: 'Distinction',
+      score: 98.4,
+      issuedAt: new Date('2026-02-15T10:00:00Z'),
     },
   });
 
