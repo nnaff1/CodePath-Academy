@@ -462,36 +462,9 @@ export default function StudentProfilePage() {
             </div>
           )}
 
-          {/* Tab 2: Security & Preferences */}
+          {/* Tab 2: Security */}
           {activeTab === 'security' && (
             <div className="space-y-6">
-              <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4">
-                <div className="flex items-center gap-2">
-                  <Globe size={18} className="text-[#2563EB]" />
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    {pm.languageTitle}
-                  </h3>
-                </div>
-                <p className="text-xs text-slate-500">{pm.languageSub}</p>
-                
-                <div className="flex items-center gap-3 pt-1">
-                  {(['en', 'id'] as const).map((lang) => (
-                    <button
-                      key={lang}
-                      onClick={() => setLanguage(lang)}
-                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                        language === lang
-                          ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-xs'
-                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      <Globe size={13} />
-                      {lang === 'en' ? 'English (EN)' : 'Bahasa Indonesia (ID)'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs">
                 <form onSubmit={handleChangePassword} className="space-y-4">
                   <div className="flex items-center gap-2 pb-1">
