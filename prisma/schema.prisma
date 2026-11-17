@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  name        String
+  email       String       @unique
+  password    String
+  role        String       @default("USER") // "USER" | "ADMIN" | "SUPER_ADMIN"
+  xpPoints    Int          @default(0)
+  createdAt   DateTime     @default(now())
+
+  // Relations
+  courses     Course[]     @relation("MentorCourses")
+  enrollments Enrollment[]
+  submissions Submission[]
+}
+
+model Course {
+  id          String       @id @default(cuid())
+  mentorId    String
+  mentor      User         @relation("MentorCourses", fields: [mentorId], references: [id])
+  title       String
+  slug        String       @unique
+  description String
+  level       String       // "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
+  price       Int
+  status      String       @default("PUBLISHED") // "DRAFT" | "PENDING" | "PUBLISHED"
+  createdAt   DateTime     @default(now())
+
+  // Relations
+  chapters    Chapter[]
+  enrollments Enrollment[]
+}
+
+model Chapter {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  order     Int
+  lessons   Lesson[]
+}
+
+model Lesson {
+  id           String       @id @default(cuid())
+  chapterId    String
+  chapter      Chapter      @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  title        String
+  videoUrl     String?
+  content      String
+  starterCode  String?
+  solutionHint String?
+  order        Int
+  submissions  Submission[]
+}
+
+model Enrollment {
+  id              String       @id @default(cuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId        String
+  course          Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  paymentStatus   String       @default("FREE") // "FREE" | "PAID"
+  progressPercent Int          @default(0)
+  completedAt     DateTime?
+  createdAt       DateTime     @default(now())
+
+  // Relations
+  certificate     Certificate?
+
+  @@unique([userId, courseId])
+}
+
+model Submission {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  githubUrl String
+  status    String   @default("PENDING") // "PENDING" | "APPROVED" | "REVISION"
+  feedback  String?
+  createdAt DateTime @default(now())
+}
+
+model Certificate {
+  id              String     @id @default(cuid())
+  enrollmentId    String     @unique
+  enrollment      Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  certificateCode String     @unique
+  grade           String
+  score           Float
+  issuedAt        DateTime   @default(now())
+}
