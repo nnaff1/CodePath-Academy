@@ -37,9 +37,11 @@ import {
   UserCheck,
   HelpCircle,
   ThumbsUp,
+  User,
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import Link from 'next/link';
+import { StudentProfileModal } from '@/components/dashboard/StudentProfileModal';
 
 // ─── Interfaces ─────────────────────────────────────────────────────────────
 
@@ -49,6 +51,8 @@ interface StudentProfile {
   email: string;
   role: string;
   xpPoints: number;
+  bio?: string;
+  githubUsername?: string;
 }
 
 interface StudentKPIs {
@@ -184,12 +188,15 @@ export default function StudentDashboard() {
 
   // Dashboard Data from Database
   const [loading, setLoading] = useState(true);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [student, setStudent] = useState<StudentProfile>({
     id: 'student-demo',
     name: 'Affando Fathinatha',
     email: 'student@codepath.id',
     role: 'USER',
     xpPoints: 1450,
+    bio: 'Fullstack Next.js developer aspiring to build production AI orchestration systems.',
+    githubUsername: 'nnaff1',
   });
   const [kpis, setKpis] = useState<StudentKPIs>({
     totalXp: 1450,
@@ -252,7 +259,12 @@ export default function StudentDashboard() {
       const res = await fetch('/api/student/dashboard');
       const data = await res.json();
       if (data.success) {
-        if (data.student) setStudent(data.student);
+        if (data.student) {
+          setStudent(data.student);
+          if (data.student.githubUsername) {
+            setGithubUrl(`https://github.com/${data.student.githubUsername}/next15-actions-demo`);
+          }
+        }
         if (data.kpis) setKpis(data.kpis);
         if (data.currentLesson) {
           setCurrentLesson(data.currentLesson);
@@ -268,6 +280,22 @@ export default function StudentDashboard() {
       setLoading(false);
     }
   }, []);
+
+  const handleProfileUpdated = (updated: {
+    name: string;
+    bio: string;
+    githubUsername: string;
+  }) => {
+    setStudent((prev) => ({
+      ...prev,
+      name: updated.name,
+      bio: updated.bio,
+      githubUsername: updated.githubUsername,
+    }));
+    if (updated.githubUsername) {
+      setGithubUrl(`https://github.com/${updated.githubUsername}/next15-actions-demo`);
+    }
+  };
 
   const fetchCatalogCourses = useCallback(async () => {
     setCatalogLoading(true);
@@ -515,24 +543,32 @@ export default function StudentDashboard() {
 
         {/* Pinned Student Profile Card */}
         <div className="px-3 pb-4 pt-3 border-t border-slate-100 mt-2">
-          <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors relative">
-            <div className="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-2xs">
+          <div
+            onClick={() => setShowProfileModal(true)}
+            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors relative cursor-pointer group"
+          >
+            <div className="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
               {student.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-slate-900 truncate">{student.name}</div>
+              <div className="text-sm font-semibold text-slate-900 truncate group-hover:text-[#2563EB] transition-colors">
+                {student.name}
+              </div>
               <div className="text-[11px] text-slate-500 truncate">
                 {student.xpPoints.toLocaleString()} XP • Level 4 Back...
               </div>
             </div>
             <button
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowProfileMenu(!showProfileMenu);
+              }}
               className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer flex-shrink-0"
             >
               <MoreHorizontal size={16} />
             </button>
 
-            {/* Logout Dropdown */}
+            {/* Profile & Logout Dropdown */}
             <AnimatePresence>
               {showProfileMenu && (
                 <motion.div
@@ -540,16 +576,28 @@ export default function StudentDashboard() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 4, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50"
+                  className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50 divide-y divide-slate-100"
                 >
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowProfileMenu(false);
+                      setShowProfileModal(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    <User size={13} className="text-[#2563EB]" />
+                    Profile & Settings
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setShowProfileMenu(false);
                       handleLogout();
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                   >
-                    <LogOut size={14} />
+                    <LogOut size={13} />
                     {sd.logout}
                   </button>
                 </motion.div>
@@ -628,9 +676,13 @@ export default function StudentDashboard() {
           </button>
 
           {/* Student Avatar */}
-          <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold shadow-2xs">
+          <button
+            onClick={() => setShowProfileModal(true)}
+            title="Profile & Settings"
+            className="w-8 h-8 rounded-full bg-[#0F172A] hover:bg-[#2563EB] text-white flex items-center justify-center text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+          >
             {student.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
-          </div>
+          </button>
         </div>
       </header>
 
@@ -1301,6 +1353,15 @@ export default function StudentDashboard() {
 
         </div>
       </main>
+
+      {/* ── Student Profile & Settings Modal ── */}
+      <StudentProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        student={student}
+        certificates={certificates}
+        onProfileUpdated={handleProfileUpdated}
+      />
     </div>
   );
 }

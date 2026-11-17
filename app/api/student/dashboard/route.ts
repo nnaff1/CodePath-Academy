@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     if (studentId) {
       user = await prisma.user.findUnique({
         where: { id: studentId },
-        select: { id: true, name: true, email: true, role: true, xpPoints: true },
+        select: { id: true, name: true, email: true, role: true, xpPoints: true, bio: true, githubUsername: true },
       });
     }
 
@@ -27,13 +27,13 @@ export async function GET(req: NextRequest) {
       // Fallback to student@codepath.id or first USER
       user = await prisma.user.findFirst({
         where: { email: 'student@codepath.id' },
-        select: { id: true, name: true, email: true, role: true, xpPoints: true },
+        select: { id: true, name: true, email: true, role: true, xpPoints: true, bio: true, githubUsername: true },
       });
 
       if (!user) {
         user = await prisma.user.findFirst({
           where: { role: 'USER' },
-          select: { id: true, name: true, email: true, role: true, xpPoints: true },
+          select: { id: true, name: true, email: true, role: true, xpPoints: true, bio: true, githubUsername: true },
         });
       }
     }
@@ -139,6 +139,8 @@ export async function GET(req: NextRequest) {
         email: user.email,
         role: user.role,
         xpPoints: user.xpPoints,
+        bio: user.bio || '',
+        githubUsername: user.githubUsername || '',
       },
       kpis: {
         totalXp: user.xpPoints,

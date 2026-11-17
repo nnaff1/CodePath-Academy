@@ -58,6 +58,8 @@ async function main() {
       password: hashedPassword,
       role: 'USER',
       xpPoints: 1450,
+      bio: 'Fullstack Next.js developer aspiring to build production AI orchestration systems.',
+      githubUsername: 'nnaff1',
     },
   });
 
