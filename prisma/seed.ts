@@ -326,6 +326,88 @@ async function main() {
   console.log(` - Certificate: ${cert1.certificateCode} (${cert1.grade}, ${cert1.score}%) -> Student: ${student.name}`);
   console.log(` - Certificate: ${cert2.certificateCode} (${cert2.grade}, ${cert2.score}%) -> Student: ${student.name}`);
 
+  // ─────────────────────────────────────────────────────────────
+  // 5. Additional Demo Students + Submissions (for Mentor Dashboard)
+  // ─────────────────────────────────────────────────────────────
+
+  const demoStudents = [
+    { name: 'Alex Vance',     email: 'alex@codepath.org',       xpPoints: 870 },
+    { name: 'Maya Lin',       email: 'maya.lin@dev.io',          xpPoints: 1140 },
+    { name: 'David Kusuma',   email: 'dkusuma@alumni.org',       xpPoints: 620 },
+    { name: 'Elena Rostova',  email: 'elena.r@techhub.com',      xpPoints: 950 },
+    { name: 'Jordan Chen',    email: 'jordan.c@codepath.org',    xpPoints: 780 },
+  ];
+
+  const createdDemoStudents = await Promise.all(
+    demoStudents.map((s) =>
+      prisma.user.create({
+        data: { ...s, password: hashedPassword, role: 'USER' },
+      })
+    )
+  );
+
+  // Enroll demo students into various courses
+  await prisma.enrollment.createMany({
+    data: [
+      { userId: createdDemoStudents[0].id, courseId: course1.id, paymentStatus: 'PAID', progressPercent: 72 },
+      { userId: createdDemoStudents[1].id, courseId: course2.id, paymentStatus: 'PAID', progressPercent: 55 },
+      { userId: createdDemoStudents[2].id, courseId: course2.id, paymentStatus: 'PAID', progressPercent: 38 },
+      { userId: createdDemoStudents[3].id, courseId: course1.id, paymentStatus: 'PAID', progressPercent: 60 },
+      { userId: createdDemoStudents[4].id, courseId: course1.id, paymentStatus: 'PAID', progressPercent: 25 },
+    ],
+  });
+
+  // Fetch lesson IDs for submissions — course1 ch1 lesson1, course1 ch1 lesson2, course2 ch1 lesson1
+  const lessonsC1 = await prisma.lesson.findMany({
+    where: { chapter: { courseId: course1.id } },
+    orderBy: { order: 'asc' },
+    take: 4,
+  });
+  const lessonsC2 = await prisma.lesson.findMany({
+    where: { chapter: { courseId: course2.id } },
+    orderBy: { order: 'asc' },
+    take: 4,
+  });
+
+  // Create PENDING submissions (awaiting mentor review)
+  if (lessonsC1.length > 0 && lessonsC2.length > 0) {
+    await prisma.submission.createMany({
+      data: [
+        {
+          userId: createdDemoStudents[0].id,
+          lessonId: lessonsC1[0].id,
+          githubUrl: 'https://github.com/alexvance/next15-store',
+          status: 'PENDING',
+        },
+        {
+          userId: createdDemoStudents[1].id,
+          lessonId: lessonsC2[0].id,
+          githubUrl: 'https://github.com/mayalin/cache-worker',
+          status: 'PENDING',
+        },
+        {
+          userId: createdDemoStudents[2].id,
+          lessonId: lessonsC2.length > 1 ? lessonsC2[1].id : lessonsC2[0].id,
+          githubUrl: 'https://github.com/dkusuma/algo-challenges-go',
+          status: 'PENDING',
+        },
+        {
+          userId: createdDemoStudents[3].id,
+          lessonId: lessonsC1.length > 1 ? lessonsC1[1].id : lessonsC1[0].id,
+          githubUrl: 'https://github.com/erostova/rsc-flight-demo',
+          status: 'PENDING',
+        },
+        {
+          userId: createdDemoStudents[4].id,
+          lessonId: lessonsC1[0].id,
+          githubUrl: 'https://github.com/jordanc/next-auth-starter',
+          status: 'PENDING',
+        },
+      ],
+    });
+  }
+
+  console.log('👥 5 demo students + submissions seeded for Mentor Dashboard.');
   console.log('✅ Seeding completed successfully!');
 }
 
