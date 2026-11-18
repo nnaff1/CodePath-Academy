@@ -484,11 +484,11 @@ export default function PromoRevenuePage() {
       {/* ═══════════════════════════════════════════════════════════════ */}
       {/* MAIN VIEWPORT (Offset by 220px Sidebar)                         */}
       {/* ═══════════════════════════════════════════════════════════════ */}
-      <div className="ml-[220px] flex-1 flex flex-col min-w-0">
+      <div className="ml-[220px] flex-1 flex flex-col min-w-0 overflow-x-clip">
         {/* ─── TOP OPERATIONAL HEADER BAR ─── */}
-        <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-20 gap-8 min-w-0">
-          {/* Breadcrumb & Gateway Status Pill */}
-          <div className="flex items-center gap-4 flex-shrink-0 mr-8 lg:mr-12">
+        <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-20">
+          {/* Breadcrumb, Gateway Status Pill & Dual Clock */}
+          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
             <div className="flex items-center gap-2 text-xs">
               <Link href="/dashboard/super-admin" className="text-slate-400 hover:text-slate-600 font-medium whitespace-nowrap transition">
                 {sa.breadcrumbPrefix}
@@ -502,20 +502,20 @@ export default function PromoRevenuePage() {
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>{pr.gatewayStatus}</span>
             </div>
-          </div>
 
-          {/* Right Controls: Dual Clock, Search, Language, Notifications, Avatar */}
-          <div className="flex items-center gap-4 lg:gap-5 ml-auto flex-shrink-0">
-            {/* Dual Live Clocks dengan jarak lega dan terpisah jelas dari status gateway */}
-            <div className="hidden lg:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-1.5 text-[11px] font-mono text-slate-600 whitespace-nowrap flex-shrink-0 shadow-xs">
+            {/* Dual Live Clocks - dengan jarak pas (16px) dari status gateway: tidak nempel & tidak kejauhan */}
+            <div className="hidden lg:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1 text-[11px] font-mono text-slate-600 whitespace-nowrap flex-shrink-0 ml-1">
               <Clock className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
               <span>UTC {timeUtc}</span>
               <span className="text-slate-300">|</span>
               <span className="font-semibold text-slate-800">WIB {timeWib}</span>
             </div>
+          </div>
 
+          {/* Right Controls: Search, Language, Notifications, Avatar */}
+          <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">
             {/* Global Search Bar */}
-            <div className="relative hidden xl:block w-44 2xl:w-60 focus-within:!w-64 transition-all duration-200">
+            <div className="relative hidden md:block w-36 lg:w-48 xl:w-56 focus-within:!w-60 transition-all duration-200">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 placeholder={pr.searchPlaceholder}
