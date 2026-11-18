@@ -425,12 +425,6 @@ export default function PromoRevenuePage() {
             <span className="flex-1 text-left truncate">{sa.nav.users}</span>
           </Link>
 
-          {/* ACTIVE TAB: Promo & Revenue */}
-          <div className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-[#2563EB] text-white shadow-sm cursor-pointer">
-            <DollarSign size={16} className="text-white" />
-            <span className="flex-1 text-left truncate">{sa.nav.revenue}</span>
-          </div>
-
           <Link
             href="/dashboard/super-admin"
             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition"
@@ -438,6 +432,17 @@ export default function PromoRevenuePage() {
             <Megaphone size={16} className="text-slate-400" />
             <span className="flex-1 text-left truncate">{sa.nav.cms}</span>
           </Link>
+
+          {/* Garis pemisah & jarak antara CMS dengan Promo */}
+          <div className="pt-3 pb-1.5 px-1">
+            <div className="border-t border-slate-200" />
+          </div>
+
+          {/* ACTIVE TAB: Promo & Pendapatan ditaruh paling bawah */}
+          <div className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-[#2563EB] text-white shadow-sm cursor-pointer">
+            <DollarSign size={16} className="text-white" />
+            <span className="flex-1 text-left truncate">{sa.nav.revenue}</span>
+          </div>
         </nav>
 
         {/* Pinned Chief Administrator Profile Card */}
@@ -1188,3 +1193,4 @@ export default function PromoRevenuePage() {
     </div>
   );
 }
+

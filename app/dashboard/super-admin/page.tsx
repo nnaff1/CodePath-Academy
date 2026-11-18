@@ -612,35 +612,17 @@ export default function SuperAdminDashboard() {
         {/* Navigation Tabs */}
         <nav className="flex-1 px-3 space-y-1.5 overflow-y-auto">
           {[
-            { key: 'analytics', label: sa.nav.analytics, icon: Activity, badge: null, href: '/dashboard/super-admin' },
+            { key: 'analytics', label: sa.nav.analytics, icon: Activity, badge: null },
             {
               key: 'approvals',
               label: sa.nav.approvals,
               icon: BookOpen,
               badge: pendingCount > 0 ? pendingCount : null,
-              href: null,
             },
-            { key: 'users', label: sa.nav.users, icon: Users, badge: null, href: null },
-            { key: 'revenue', label: sa.nav.revenue, icon: DollarSign, badge: null, href: '/dashboard/super-admin/promo-revenue' },
-            { key: 'cms', label: sa.nav.cms, icon: Megaphone, badge: null, href: null },
-          ].map(({ key, label, icon: Icon, badge, href }) => {
+            { key: 'users', label: sa.nav.users, icon: Users, badge: null },
+            { key: 'cms', label: sa.nav.cms, icon: Megaphone, badge: null },
+          ].map(({ key, label, icon: Icon, badge }) => {
             const isActive = activeNav === key;
-            if (href && key === 'revenue') {
-              return (
-                <Link
-                  key={key}
-                  href={href}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isActive
-                      ? 'bg-[#2563EB] text-white shadow-sm'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
-                >
-                  <Icon size={16} className={isActive ? 'text-white' : 'text-slate-400'} />
-                  <span className="flex-1 text-left truncate">{label}</span>
-                </Link>
-              );
-            }
             return (
               <button
                 key={key}
@@ -669,6 +651,20 @@ export default function SuperAdminDashboard() {
               </button>
             );
           })}
+
+          {/* Garis pemisah & jarak antara CMS dengan Promo */}
+          <div className="pt-3 pb-1.5 px-1">
+            <div className="border-t border-slate-200" />
+          </div>
+
+          {/* Promo & Pendapatan di paling bawah */}
+          <Link
+            href="/dashboard/super-admin/promo-revenue"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 text-slate-600 hover:bg-slate-50 hover:text-slate-900 cursor-pointer"
+          >
+            <DollarSign size={16} className="text-slate-400" />
+            <span className="flex-1 text-left truncate">{sa.nav.revenue}</span>
+          </Link>
         </nav>
 
         {/* Pinned Chief Administrator Profile Card */}
