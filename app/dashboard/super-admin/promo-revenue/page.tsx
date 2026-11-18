@@ -486,40 +486,40 @@ export default function PromoRevenuePage() {
       {/* ═══════════════════════════════════════════════════════════════ */}
       <div className="ml-[220px] flex-1 flex flex-col min-w-0">
         {/* ─── TOP OPERATIONAL HEADER BAR ─── */}
-        <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-20">
+        <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-20 gap-8 min-w-0">
           {/* Breadcrumb & Gateway Status Pill */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 flex-shrink-0 mr-8 lg:mr-12">
             <div className="flex items-center gap-2 text-xs">
-              <Link href="/dashboard/super-admin" className="text-slate-400 hover:text-slate-600 font-medium transition">
+              <Link href="/dashboard/super-admin" className="text-slate-400 hover:text-slate-600 font-medium whitespace-nowrap transition">
                 {sa.breadcrumbPrefix}
               </Link>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-              <span className="font-bold text-[#0F172A]">{pr.breadcrumb}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
+              <span className="font-bold text-[#0F172A] whitespace-nowrap">{pr.breadcrumb}</span>
             </div>
 
             {/* Gateway Status Pill */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap flex-shrink-0 bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>{pr.gatewayStatus}</span>
             </div>
           </div>
 
           {/* Right Controls: Dual Clock, Search, Language, Notifications, Avatar */}
-          <div className="flex items-center gap-4">
-            {/* Dual Live Clocks */}
-            <div className="hidden lg:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-[11px] font-mono text-slate-600">
-              <Clock className="w-3.5 h-3.5 text-slate-400" />
+          <div className="flex items-center gap-4 lg:gap-5 ml-auto flex-shrink-0">
+            {/* Dual Live Clocks dengan jarak lega dan terpisah jelas dari status gateway */}
+            <div className="hidden lg:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-1.5 text-[11px] font-mono text-slate-600 whitespace-nowrap flex-shrink-0 shadow-xs">
+              <Clock className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
               <span>UTC {timeUtc}</span>
               <span className="text-slate-300">|</span>
               <span className="font-semibold text-slate-800">WIB {timeWib}</span>
             </div>
 
             {/* Global Search Bar */}
-            <div className="relative hidden md:block w-64">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="relative hidden xl:block w-44 2xl:w-60 focus-within:!w-64 transition-all duration-200">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 placeholder={pr.searchPlaceholder}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition truncate"
               />
             </div>
 
