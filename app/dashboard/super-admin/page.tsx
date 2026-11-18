@@ -612,18 +612,35 @@ export default function SuperAdminDashboard() {
         {/* Navigation Tabs */}
         <nav className="flex-1 px-3 space-y-1.5 overflow-y-auto">
           {[
-            { key: 'analytics', label: sa.nav.analytics, icon: Activity, badge: null },
+            { key: 'analytics', label: sa.nav.analytics, icon: Activity, badge: null, href: '/dashboard/super-admin' },
             {
               key: 'approvals',
               label: sa.nav.approvals,
               icon: BookOpen,
               badge: pendingCount > 0 ? pendingCount : null,
+              href: null,
             },
-            { key: 'users', label: sa.nav.users, icon: Users, badge: null },
-            { key: 'revenue', label: sa.nav.revenue, icon: DollarSign, badge: null },
-            { key: 'cms', label: sa.nav.cms, icon: Megaphone, badge: null },
-          ].map(({ key, label, icon: Icon, badge }) => {
+            { key: 'users', label: sa.nav.users, icon: Users, badge: null, href: null },
+            { key: 'revenue', label: sa.nav.revenue, icon: DollarSign, badge: null, href: '/dashboard/super-admin/promo-revenue' },
+            { key: 'cms', label: sa.nav.cms, icon: Megaphone, badge: null, href: null },
+          ].map(({ key, label, icon: Icon, badge, href }) => {
             const isActive = activeNav === key;
+            if (href && key === 'revenue') {
+              return (
+                <Link
+                  key={key}
+                  href={href}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                    isActive
+                      ? 'bg-[#2563EB] text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon size={16} className={isActive ? 'text-white' : 'text-slate-400'} />
+                  <span className="flex-1 text-left truncate">{label}</span>
+                </Link>
+              );
+            }
             return (
               <button
                 key={key}

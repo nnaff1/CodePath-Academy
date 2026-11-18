@@ -20,29 +20,31 @@ model User {
   createdAt      DateTime     @default(now())
 
   // Relations
-  courses     Course[]     @relation("MentorCourses")
-  enrollments Enrollment[]
-  submissions Submission[]
+  courses      Course[]      @relation("MentorCourses")
+  enrollments  Enrollment[]
+  submissions  Submission[]
+  transactions Transaction[]
 }
 
 model Course {
-  id           String       @id @default(cuid())
+  id           String        @id @default(cuid())
   mentorId     String
-  mentor       User         @relation("MentorCourses", fields: [mentorId], references: [id])
+  mentor       User          @relation("MentorCourses", fields: [mentorId], references: [id])
   title        String
-  slug         String       @unique
+  slug         String        @unique
   description  String
-  level        String       // "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
+  level        String        // "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
   price        Int
-  status       String       @default("PUBLISHED") // "DRAFT" | "PENDING" | "PUBLISHED"
-  codeTag      String?      // e.g. "GO/KAF", "TS/NEXT"
-  isFeatured   Boolean      @default(false)
+  status       String        @default("PUBLISHED") // "DRAFT" | "PENDING" | "PUBLISHED"
+  codeTag      String?       // e.g. "GO/KAF", "TS/NEXT"
+  isFeatured   Boolean       @default(false)
   featuredSlot Int?
-  createdAt    DateTime     @default(now())
+  createdAt    DateTime      @default(now())
 
   // Relations
-  chapters    Chapter[]
-  enrollments Enrollment[]
+  chapters     Chapter[]
+  enrollments  Enrollment[]
+  transactions Transaction[]
 }
 
 model Chapter {
@@ -110,4 +112,37 @@ model PlatformSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model PromoCode {
+  id            String        @id @default(cuid())
+  code          String        @unique // e.g. FLASH25, EARLYBIRD, COHORT14PRO
+  discountType  String        // "PERCENTAGE" | "FIXED"
+  discountValue Int
+  minSpend      Int           @default(0)
+  usedCount     Int           @default(0)
+  usageQuota    Int
+  targetTrack   String        @default("All Courses & Capstones")
+  expiresAt     DateTime
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+
+  // Relations
+  transactions  Transaction[]
+}
+
+model Transaction {
+  id             String     @id @default(cuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId       String
+  course         Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  promoCodeId    String?
+  promoCode      PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+  grossAmount    Int
+  discountAmount Int        @default(0)
+  netAmount      Int
+  paymentGateway String     // "Midtrans" | "Xendit"
+  status         String     @default("PAID") // "PAID" | "PENDING"
+  createdAt      DateTime   @default(now())
 }
