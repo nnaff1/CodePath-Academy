@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchParams } from 'next/navigation';
 import {
   Shield,
   Activity,
@@ -40,6 +41,7 @@ import {
   Megaphone,
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { useSuperAdmin } from './SuperAdminContext';
 import Link from 'next/link';
 
 // ─── Interfaces ─────────────────────────────────────────────────────────────
@@ -113,14 +115,32 @@ interface UserItem {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function SuperAdminDashboard() {
+function SuperAdminDashboardContent() {
   const { language, setLanguage, t } = useLanguage();
   const sa = t.superAdminDashboard;
+  const {
+    superAdmin: sharedSuperAdmin,
+    setPendingApprovals,
+    isMaintenanceMode,
+    setIsMaintenanceMode,
+    showToast,
+  } = useSuperAdmin();
+
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab') as 'analytics' | 'approvals' | 'users' | 'cms' | null;
 
   // Active navigation tab
   const [activeNav, setActiveNav] = useState<
     'analytics' | 'approvals' | 'users' | 'revenue' | 'cms'
   >('analytics');
+
+  useEffect(() => {
+    if (tabParam && ['analytics', 'approvals', 'users', 'cms'].includes(tabParam)) {
+      setActiveNav(tabParam);
+      const el = document.getElementById(`section-${tabParam}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [tabParam]);
 
   // Loading & Data States
   const [loading, setLoading] = useState(true);
@@ -162,43 +182,7 @@ export default function SuperAdminDashboard() {
   const [isSavingMerch, setIsSavingMerch] = useState(false);
 
   // Maintenance Toggle State
-  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const [isTogglingMaintenance, setIsTogglingMaintenance] = useState(false);
-
-  // Toast State
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  // Live Dual Clocks (UTC & WIB)
-  const [timeUtc, setTimeUtc] = useState('14:32');
-  const [timeWib, setTimeWib] = useState('21:32');
-
-  useEffect(() => {
-    const updateClocks = () => {
-      const now = new Date();
-      setTimeUtc(
-        now.toLocaleTimeString('en-GB', {
-          timeZone: 'UTC',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      );
-      setTimeWib(
-        now.toLocaleTimeString('en-GB', {
-          timeZone: 'Asia/Jakarta',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      );
-    };
-    updateClocks();
-    const interval = setInterval(updateClocks, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Fetch initial data
   const fetchData = useCallback(async () => {
@@ -215,7 +199,10 @@ export default function SuperAdminDashboard() {
         setKpis(overviewRes.kpis);
         setSystem(overviewRes.system);
         setSuperAdmin(overviewRes.superAdmin);
-        setIsMaintenanceMode(overviewRes.system.maintenanceMode);
+        setIsMaintenanceMode(overviewRes.system?.maintenanceMode ?? false);
+        if (typeof overviewRes.kpis?.pendingApprovals === 'number') {
+          setPendingApprovals(overviewRes.kpis.pendingApprovals);
+        }
       }
 
       if (coursesRes.success) {
@@ -558,244 +545,12 @@ export default function SuperAdminDashboard() {
   const pendingCount = kpis?.pendingApprovals ?? courses.filter((c) => c.status === 'PENDING').length;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
-      {/* ─── TOAST NOTIFICATION ─── */}
-      <AnimatePresence>
-        {toastMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-5 right-5 z-50 bg-[#0F172A] text-white px-5 py-3 rounded-2xl shadow-xl border border-slate-700 text-xs font-semibold flex items-center gap-2.5 backdrop-blur-md"
-          >
-            <Sparkles className="w-4 h-4 text-emerald-400" />
-            <span>{toastMessage}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* FIXED LEFT SIDEBAR (220px)                                      */}
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      <aside className="fixed left-0 top-0 h-screen w-[220px] bg-white border-r border-slate-200 flex flex-col z-30">
-        {/* Brand Header */}
-        <div className="p-5 border-b border-slate-100">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-xl bg-[#2563EB] flex items-center justify-center text-white font-mono text-xs font-extrabold shadow-sm">
-              &lt;&gt;
-            </div>
-            <div>
-              <span className="font-extrabold text-[#0F172A] text-sm tracking-tight block">
-                CodePath
-              </span>
-              <span className="text-[10px] tracking-widest text-slate-400 font-bold block uppercase -mt-1">
-                ACADEMY
-              </span>
-            </div>
-          </div>
-          {/* Super Admin Pill Badge */}
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0F172A] text-white text-[10px] font-bold tracking-wider">
-            <Shield className="w-3 h-3 text-blue-400" />
-            <span>{sa.portalBadge}</span>
-          </div>
-        </div>
-
-        {/* Section Label: OPERATIONS */}
-        <div className="px-5 pt-4 pb-2">
-          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-            • {sa.sectionOperations}
-          </span>
-        </div>
-
-        {/* Navigation Tabs */}
-        <nav className="flex-1 px-3 space-y-1.5 overflow-y-auto">
-          {[
-            { key: 'analytics', label: sa.nav.analytics, icon: Activity, badge: null },
-            {
-              key: 'approvals',
-              label: sa.nav.approvals,
-              icon: BookOpen,
-              badge: pendingCount > 0 ? pendingCount : null,
-            },
-            { key: 'users', label: sa.nav.users, icon: Users, badge: null },
-            { key: 'cms', label: sa.nav.cms, icon: Megaphone, badge: null },
-          ].map(({ key, label, icon: Icon, badge }) => {
-            const isActive = activeNav === key;
-            return (
-              <button
-                key={key}
-                onClick={() => {
-                  setActiveNav(key as any);
-                  const el = document.getElementById(`section-${key}`);
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                  isActive
-                    ? 'bg-[#2563EB] text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
-              >
-                <Icon size={16} className={isActive ? 'text-white' : 'text-slate-400'} />
-                <span className="flex-1 text-left truncate">{label}</span>
-                {badge !== null && (
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-red-500 text-white'
-                    }`}
-                  >
-                    {badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-
-          {/* Garis pemisah & jarak antara CMS dengan Promo */}
-          <div className="pt-3 pb-1.5 px-1">
-            <div className="border-t border-slate-200" />
-          </div>
-
-          {/* Promo & Pendapatan di paling bawah */}
-          <Link
-            href="/dashboard/super-admin/promo-revenue"
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 text-slate-600 hover:bg-slate-50 hover:text-slate-900 cursor-pointer"
-          >
-            <DollarSign size={16} className="text-slate-400" />
-            <span className="flex-1 text-left truncate">{sa.nav.revenue}</span>
-          </Link>
-        </nav>
-
-        {/* Pinned Chief Administrator Profile Card */}
-        <div className="p-3 border-t border-slate-100">
-          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3">
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-9 h-9 rounded-xl bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-sm border border-slate-800">
-                {adminInitials}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-bold text-[#0F172A] text-xs truncate">
-                  {superAdmin?.name || 'Alexander Wright'}
-                </p>
-                <p className="text-[10px] text-slate-500 font-medium truncate">
-                  {sa.chiefAdmin}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
-              <span className="text-[9px] font-bold text-emerald-600 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                PLATFORM ROOT
-              </span>
-              <button
-                onClick={() => {
-                  document.cookie = 'codepath_session=; Max-Age=0; path=/';
-                  window.location.href = '/login';
-                }}
-                className="text-[10px] font-semibold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <LogOut className="w-3 h-3" />
-                {sa.logout}
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* MAIN VIEWPORT (Offset by 220px Sidebar)                         */}
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      <div className="ml-[220px] flex-1 flex flex-col min-w-0">
-        {/* ─── TOP OPERATIONAL HEADER BAR ─── */}
-        <header className="bg-white border-b border-slate-200 px-4 sm:px-5 py-2.5 flex items-center justify-between sticky top-0 z-20 w-full min-w-0">
-          {/* Breadcrumb, Status Pill & Dual Clock */}
-          <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
-            <div className="flex items-center gap-1.5 text-xs">
-              <span className="text-slate-400 font-medium whitespace-nowrap">{sa.breadcrumbPrefix}</span>
-              <ChevronRight className="w-3 h-3 text-slate-300 flex-shrink-0" />
-              <span className="font-bold text-[#0F172A] whitespace-nowrap">{sa.breadcrumbCurrent}</span>
-            </div>
-
-            {/* Status Pill */}
-            <div
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap flex-shrink-0 transition-colors ${
-                isMaintenanceMode
-                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  isMaintenanceMode ? 'bg-amber-500 animate-ping' : 'bg-emerald-500 animate-pulse'
-                }`}
-              />
-              <span>{isMaintenanceMode ? sa.maintenanceMode : sa.allServicesOperational}</span>
-            </div>
-
-            {/* Dual Live Clocks - dengan jarak pas dari status operasi, ringkas & rapi */}
-            <div className="hidden lg:flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-[11px] font-mono text-slate-600 whitespace-nowrap flex-shrink-0 ml-1">
-              <Clock className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-              <span>UTC {timeUtc}</span>
-              <span className="text-slate-300">|</span>
-              <span className="font-semibold text-slate-800">WIB {timeWib}</span>
-            </div>
-          </div>
-
-          {/* Right Controls: Search, Language, Notifications, Avatar */}
-          <div className="flex items-center gap-2 sm:gap-3 ml-auto flex-shrink-0">
-            {/* Global Search Bar */}
-            <div className="relative hidden md:block w-32 sm:w-36 lg:w-44 xl:w-48 focus-within:!w-56 transition-all duration-200">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                placeholder={sa.searchPlaceholder}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition truncate"
-              />
-            </div>
-
-            {/* Language Toggle */}
-            <div className="flex items-center gap-1 text-xs">
-              <button
-                onClick={() => setLanguage('en')}
-                className={`font-bold transition-colors ${
-                  language === 'en' ? 'text-[#2563EB]' : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                EN
-              </button>
-              <span className="text-slate-300">|</span>
-              <button
-                onClick={() => setLanguage('id')}
-                className={`font-bold transition-colors ${
-                  language === 'id' ? 'text-[#2563EB]' : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                ID
-              </button>
-            </div>
-
-            {/* Notification Bell */}
-            <div className="relative cursor-pointer">
-              <div className="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center hover:bg-slate-50 text-slate-500 transition">
-                <Bell className="w-4 h-4" />
-              </div>
-              <span className="w-2 h-2 rounded-full bg-red-500 absolute top-1 right-1 ring-2 ring-white" />
-            </div>
-
-            {/* Admin Avatar Dropdown */}
-            <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-              <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold shadow-xs">
-                {adminInitials}
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* ─── MAIN CONTENT CONTAINER ─── */}
-        <main className="p-6 sm:p-8 space-y-8 max-w-[1600px] w-full">
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {/* SECTION 1: EXECUTIVE HEADER & 4-COLUMN PLATFORM KPI CARDS   */}
-          {/* ═══════════════════════════════════════════════════════════ */}
-          <div
-            id="section-analytics"
+    <div className="p-6 sm:p-8 space-y-8 max-w-[1600px] w-full">
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* SECTION 1: EXECUTIVE HEADER & 4-COLUMN PLATFORM KPI CARDS   */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <div
+        id="section-analytics"
             className="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6"
           >
             <div className="space-y-2">
@@ -1423,8 +1178,6 @@ export default function SuperAdminDashboard() {
               </div>
             </div>
           </div>
-        </main>
-      </div>
 
       {/* ═══════════════════════════════════════════════════════════════ */}
       {/* MODAL: INVITE NEW USER / ASSIGN SUPER ADMIN                     */}
@@ -1537,5 +1290,13 @@ export default function SuperAdminDashboard() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function SuperAdminDashboard() {
+  return (
+    <Suspense fallback={<div className="p-8 text-slate-400">Loading platform analytics...</div>}>
+      <SuperAdminDashboardContent />
+    </Suspense>
   );
 }

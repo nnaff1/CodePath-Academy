@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const [transactions, promos] = await Promise.all([
+    const [transactions, promos, paidEnrollments] = await Promise.all([
       prisma.transaction.findMany({
         orderBy: { createdAt: 'desc' },
         include: {
@@ -19,12 +19,17 @@ export async function GET() {
         },
       }),
       prisma.promoCode.findMany(),
+      prisma.enrollment.findMany({
+        where: { paymentStatus: 'PAID' },
+        include: { course: { select: { price: true } } },
+      }),
     ]);
 
-    // Financial KPIs
-    // Base gross volume Rp 148.500.000 + recent transactions
+    // Financial KPIs dynamically synchronized with platform overview:
+    // Base platform revenue baseline (Rp 148.500.000) + dynamic enrollment/transaction volume
+    const dynamicRevenue = paidEnrollments.reduce((sum, e) => sum + (e.course?.price || 0), 0);
     const baseGross = 148500000;
-    const grossRevenue = baseGross;
+    const grossRevenue = baseGross + dynamicRevenue; // Rp 151.720.000
     const netPlatformShare = Math.round(grossRevenue * 0.3); // 30% platform share after 70% mentor payout
     const pendingMentorPayouts = 12400000; // Rp 12.400.000 (4 mentors awaiting settlement)
     const activeRedemptions = promos.reduce((sum, p) => sum + p.usedCount, 0);
@@ -36,7 +41,7 @@ export async function GET() {
       { month: 'Jul', gross: 110, discounted: 25, formattedGross: '110M', formattedDisc: '25M' },
       { month: 'Aug', gross: 122, discounted: 27, formattedGross: '122M', formattedDisc: '27M' },
       { month: 'Sep', gross: 130, discounted: 29, formattedGross: '130M', formattedDisc: '29M' },
-      { month: "Oct '26", gross: 148.5, discounted: 32, formattedGross: '148.5M', formattedDisc: '32M', isPeak: true },
+      { month: "Oct '26", gross: Number((grossRevenue / 1000000).toFixed(1)), discounted: 32, formattedGross: `${(grossRevenue / 1000000).toFixed(1)}M`, formattedDisc: '32M', isPeak: true },
     ];
 
     const formattedTransactions = transactions.map((t) => {
@@ -107,7 +112,7 @@ export async function GET() {
       },
       chart: {
         monthlyData,
-        peakBadge: 'Oct Peak: Rp 148.5M',
+        peakBadge: `Oct Peak: Rp ${(grossRevenue / 1000000).toFixed(1)}M`,
         netRevenueMargin: '78.4%',
         totalDiscountsAbsorbed: 'Rp 140.000.000',
       },
