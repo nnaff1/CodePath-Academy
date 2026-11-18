@@ -539,6 +539,14 @@ export default function StudentDashboard() {
               </button>
             );
           })}
+          {/* Learning Room — dedicated route */}
+          <Link
+            href="/dashboard/student/learning-room/fullstack-nextjs-typescript"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all duration-150"
+          >
+            <span className="text-slate-400"><BookOpen size={18} /></span>
+            <span className="flex-1 text-left truncate text-[13px]">Learning Room</span>
+          </Link>
         </nav>
 
         {/* Pinned Student Profile Card */}

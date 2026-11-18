@@ -277,6 +277,13 @@ export default function StudentProfilePage() {
             <MessageSquare size={18} className="text-slate-400" />
             <span className="truncate text-[13px]">{sd.nav.community}</span>
           </Link>
+          <Link
+            href="/dashboard/student/learning-room/fullstack-nextjs-typescript"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition"
+          >
+            <BookOpen size={18} className="text-slate-400" />
+            <span className="truncate text-[13px]">Learning Room</span>
+          </Link>
         </nav>
 
         <div className="px-3 pb-4 pt-3 border-t border-slate-100 mt-2">
