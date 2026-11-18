@@ -174,8 +174,8 @@ export default function SuperAdminDashboard() {
   };
 
   // Live Dual Clocks (UTC & WIB)
-  const [timeUtc, setTimeUtc] = useState('');
-  const [timeWib, setTimeWib] = useState('');
+  const [timeUtc, setTimeUtc] = useState('14:32');
+  const [timeWib, setTimeWib] = useState('21:32');
 
   useEffect(() => {
     const updateClocks = () => {
@@ -185,16 +185,14 @@ export default function SuperAdminDashboard() {
           timeZone: 'UTC',
           hour: '2-digit',
           minute: '2-digit',
-          second: '2-digit',
-        }) + ' UTC'
+        })
       );
       setTimeWib(
         now.toLocaleTimeString('en-GB', {
           timeZone: 'Asia/Jakarta',
           hour: '2-digit',
           minute: '2-digit',
-          second: '2-digit',
-        }) + ' WIB'
+        })
       );
     };
     updateClocks();
@@ -706,20 +704,20 @@ export default function SuperAdminDashboard() {
       {/* ═══════════════════════════════════════════════════════════════ */}
       {/* MAIN VIEWPORT (Offset by 220px Sidebar)                         */}
       {/* ═══════════════════════════════════════════════════════════════ */}
-      <div className="ml-[220px] flex-1 flex flex-col min-w-0 overflow-x-clip">
+      <div className="ml-[220px] flex-1 flex flex-col min-w-0">
         {/* ─── TOP OPERATIONAL HEADER BAR ─── */}
-        <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-20">
+        <header className="bg-white border-b border-slate-200 px-4 sm:px-5 py-2.5 flex items-center justify-between sticky top-0 z-20 w-full min-w-0">
           {/* Breadcrumb, Status Pill & Dual Clock */}
-          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
-            <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+            <div className="flex items-center gap-1.5 text-xs">
               <span className="text-slate-400 font-medium whitespace-nowrap">{sa.breadcrumbPrefix}</span>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
+              <ChevronRight className="w-3 h-3 text-slate-300 flex-shrink-0" />
               <span className="font-bold text-[#0F172A] whitespace-nowrap">{sa.breadcrumbCurrent}</span>
             </div>
 
             {/* Status Pill */}
             <div
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap flex-shrink-0 transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap flex-shrink-0 transition-colors ${
                 isMaintenanceMode
                   ? 'bg-amber-50 text-amber-700 border border-amber-200'
                   : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -733,19 +731,19 @@ export default function SuperAdminDashboard() {
               <span>{isMaintenanceMode ? sa.maintenanceMode : sa.allServicesOperational}</span>
             </div>
 
-            {/* Dual Live Clocks - dengan jarak pas (16px) dari status operasi: tidak nempel & tidak kejauhan */}
-            <div className="hidden lg:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1 text-[11px] font-mono text-slate-600 whitespace-nowrap flex-shrink-0 ml-1">
+            {/* Dual Live Clocks - dengan jarak pas dari status operasi, ringkas & rapi */}
+            <div className="hidden lg:flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-[11px] font-mono text-slate-600 whitespace-nowrap flex-shrink-0 ml-1">
               <Clock className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-              <span>{timeUtc}</span>
+              <span>UTC {timeUtc}</span>
               <span className="text-slate-300">|</span>
-              <span className="font-semibold text-slate-800">{timeWib}</span>
+              <span className="font-semibold text-slate-800">WIB {timeWib}</span>
             </div>
           </div>
 
           {/* Right Controls: Search, Language, Notifications, Avatar */}
-          <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 ml-auto flex-shrink-0">
             {/* Global Search Bar */}
-            <div className="relative hidden md:block w-36 lg:w-48 xl:w-56 focus-within:!w-60 transition-all duration-200">
+            <div className="relative hidden md:block w-32 sm:w-36 lg:w-44 xl:w-48 focus-within:!w-56 transition-all duration-200">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 placeholder={sa.searchPlaceholder}
