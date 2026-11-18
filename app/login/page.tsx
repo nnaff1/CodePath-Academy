@@ -43,29 +43,39 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleDemoAccess = (role: 'student' | 'mentor' | 'superadmin') => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('codepath_demo_role', role);
-      localStorage.setItem(
-        'codepath_user_session',
-        JSON.stringify({
-          role,
-          name:
-            role === 'student'
-              ? 'Alex Vance'
-              : role === 'mentor'
-              ? 'Sarah Wijaya'
-              : 'Platform Admin',
-          email:
-            role === 'student'
-              ? 'alex@developer.id'
-              : role === 'mentor'
-              ? 'sarah.mentor@codepath.academy'
-              : 'root@codepath.academy',
-        })
-      );
+  const handleDemoAccess = async (role: 'student' | 'mentor' | 'superadmin') => {
+    setIsSubmitting(true);
+    const demoEmail =
+      role === 'superadmin'
+        ? 'owner@codepath.id'
+        : role === 'mentor'
+        ? 'sarah.mentor@codepath.id'
+        : 'student@codepath.id';
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: demoEmail, password: 'password123' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('codepath_demo_role', role);
+          localStorage.setItem('codepath_user_session', JSON.stringify(data.user));
+        }
+        router.push(data.redirectUrl);
+        return;
+      }
+    } catch {
+      // Fallback
+    } finally {
+      setIsSubmitting(false);
     }
 
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('codepath_demo_role', role);
+    }
     if (role === 'student') router.push('/dashboard/student');
     else if (role === 'mentor') router.push('/dashboard/mentor');
     else router.push('/dashboard/super-admin');
@@ -517,6 +527,31 @@ export default function LoginPage() {
             </button>
           </form>
 
+          {/* Quick Demo Access Bar */}
+          <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-center gap-2">
+            <span className="text-[11px] font-bold text-slate-400">Quick Demo:</span>
+            <button
+              type="button"
+              onClick={() => handleDemoAccess('student')}
+              className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2563EB] text-[11px] font-bold transition cursor-pointer"
+            >
+              🎓 Student
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDemoAccess('mentor')}
+              className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold transition cursor-pointer"
+            >
+              👨‍🏫 Mentor
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDemoAccess('superadmin')}
+              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold transition cursor-pointer"
+            >
+              🛡️ Super Admin
+            </button>
+          </div>
         </div>
 
         {/* Footer Note & Links */}

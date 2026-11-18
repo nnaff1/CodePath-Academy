@@ -13,6 +13,7 @@ model User {
   email          String       @unique
   password       String
   role           String       @default("USER") // "USER" | "ADMIN" | "SUPER_ADMIN"
+  status         String       @default("ACTIVE") // "ACTIVE" | "SUSPENDED"
   xpPoints       Int          @default(0)
   bio            String?
   githubUsername String?
@@ -25,16 +26,19 @@ model User {
 }
 
 model Course {
-  id          String       @id @default(cuid())
-  mentorId    String
-  mentor      User         @relation("MentorCourses", fields: [mentorId], references: [id])
-  title       String
-  slug        String       @unique
-  description String
-  level       String       // "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
-  price       Int
-  status      String       @default("PUBLISHED") // "DRAFT" | "PENDING" | "PUBLISHED"
-  createdAt   DateTime     @default(now())
+  id           String       @id @default(cuid())
+  mentorId     String
+  mentor       User         @relation("MentorCourses", fields: [mentorId], references: [id])
+  title        String
+  slug         String       @unique
+  description  String
+  level        String       // "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
+  price        Int
+  status       String       @default("PUBLISHED") // "DRAFT" | "PENDING" | "PUBLISHED"
+  codeTag      String?      // e.g. "GO/KAF", "TS/NEXT"
+  isFeatured   Boolean      @default(false)
+  featuredSlot Int?
+  createdAt    DateTime     @default(now())
 
   // Relations
   chapters    Chapter[]
@@ -100,4 +104,10 @@ model Certificate {
   grade           String
   score           Float
   issuedAt        DateTime   @default(now())
+}
+
+model PlatformSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }
