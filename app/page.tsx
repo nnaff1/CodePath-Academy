@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { CurriculumFlow } from '@/components/CurriculumFlow';
@@ -28,6 +29,26 @@ export default function Home() {
 
   // Toasts state
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // CMS Announcement Banner State
+  const [bannerText, setBannerText] = useState<string | null>(null);
+  const [isBannerLive, setIsBannerLive] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/super-admin/cms')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          const text = data.bannerText ?? data.cms?.bannerText;
+          const live = data.isBannerLive ?? data.cms?.isBannerLive;
+          if (live && text) {
+            setBannerText(text);
+            setIsBannerLive(true);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const addToast = (
     title: string,
@@ -111,6 +132,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
+      {/* Live Global Announcement Banner (controlled via CMS) */}
+      {isBannerLive && bannerText && (
+        <div className="bg-[#0F172A] text-white py-2 px-4 text-xs font-semibold flex items-center justify-center gap-2 relative z-50 shadow-xs border-b border-slate-800">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 animate-pulse" />
+          <span className="truncate">{bannerText}</span>
+        </div>
+      )}
+
       {/* Sticky Top Navbar */}
       <Navbar
         currentRole={currentRole}

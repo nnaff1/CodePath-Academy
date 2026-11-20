@@ -22,22 +22,41 @@ export async function GET() {
     const isBannerLive = liveSetting?.value !== 'false';
     const isMaintenanceMode = maintenanceSetting?.value === 'true';
 
+    // Build featured slots from courses that have featuredSlot set
+    const slot1 = courses.find((c) => c.featuredSlot === 1)?.id || courses[0]?.id || '';
+    const slot2 = courses.find((c) => c.featuredSlot === 2)?.id || courses[1]?.id || '';
+    const slot3 = courses.find((c) => c.featuredSlot === 3)?.id || courses[2]?.id || '';
+
+    const featuredSlots = [
+      { slot: 1, courseId: slot1 },
+      { slot: 2, courseId: slot2 },
+      { slot: 3, courseId: slot3 },
+    ];
+
+    const formattedCourses = courses.map((c) => ({
+      id: c.id,
+      title: c.title,
+      slug: c.slug,
+      codeTag: c.codeTag || 'DEV',
+      isFeatured: c.isFeatured,
+      featuredSlot: c.featuredSlot,
+      price: c.price,
+      level: c.level,
+      mentorName: c.mentor.name,
+    }));
+
     return NextResponse.json({
       success: true,
+      bannerText,
+      isBannerLive,
+      isMaintenanceMode,
+      featuredSlots,
       cms: {
         bannerText,
         isBannerLive,
         isMaintenanceMode,
-        courses: courses.map((c) => ({
-          id: c.id,
-          title: c.title,
-          slug: c.slug,
-          codeTag: c.codeTag || 'DEV',
-          isFeatured: c.isFeatured,
-          featuredSlot: c.featuredSlot,
-          price: c.price,
-          mentorName: c.mentor.name,
-        })),
+        featuredSlots,
+        courses: formattedCourses,
       },
     });
   } catch (error) {
@@ -52,7 +71,11 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { action, bannerText, isBannerLive, isMaintenanceMode, featuredSlots } = body;
+    const action = (body.action || '').toLowerCase().replace(/_/g, '-');
+    const bannerText = body.bannerText;
+    const isBannerLive = body.isBannerLive ?? body.isLive;
+    const isMaintenanceMode = body.isMaintenanceMode;
+    const featuredSlots = body.featuredSlots || body.slots;
 
     if (action === 'update-banner') {
       if (typeof bannerText === 'string') {
@@ -90,7 +113,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (action === 'save-merchandising' && Array.isArray(featuredSlots)) {
+    if (
+      (action === 'save-merchandising' || action === 'update-featured') &&
+      Array.isArray(featuredSlots)
+    ) {
       // Reset current featured courses
       await prisma.course.updateMany({
         data: { isFeatured: false, featuredSlot: null },
@@ -124,4 +150,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
