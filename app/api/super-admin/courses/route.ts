@@ -86,6 +86,17 @@ export async function GET(req: NextRequest) {
         .join('')
         .toUpperCase();
 
+      const specializationTag =
+        course.codeTag?.includes('GO') || course.title.toLowerCase().includes('backend') || course.title.toLowerCase().includes('microservices')
+          ? 'BACKEND'
+          : course.codeTag?.includes('REACT') || course.title.toLowerCase().includes('frontend') || course.title.toLowerCase().includes('ui')
+          ? 'FRONTEND'
+          : course.codeTag?.includes('AI') || course.title.toLowerCase().includes('ai')
+          ? 'AI'
+          : course.codeTag?.includes('K8S') || course.title.toLowerCase().includes('cloud') || course.title.toLowerCase().includes('devops')
+          ? 'DEVOPS'
+          : 'FULLSTACK';
+
       return {
         id: course.id,
         title: course.title,
@@ -99,6 +110,7 @@ export async function GET(req: NextRequest) {
         isFeatured: course.isFeatured,
         featuredSlot: course.featuredSlot,
         createdAt: course.createdAt,
+        submittedAt: course.createdAt,
         mentor: {
           id: course.mentor.id,
           name: course.mentor.name,
@@ -106,8 +118,13 @@ export async function GET(req: NextRequest) {
           initials: mentorInitials,
           title: course.mentor.role === 'ADMIN' ? 'Lead Instructor' : 'Instructor',
         },
+        mentorName: course.mentor.name || 'Instructor',
+        mentorAvatar: null,
+        specialization: specializationTag,
         moduleCount,
+        modulesCount: moduleCount,
         labCount,
+        lessonsCount: labCount,
       };
     });
 
@@ -129,7 +146,10 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const { action, courseIds, courseId, status } = body;
 
-    if (action === 'bulk-approve' && Array.isArray(courseIds)) {
+    if (
+      (action === 'bulk-approve' || action === 'BULK_APPROVE') &&
+      Array.isArray(courseIds)
+    ) {
       await prisma.course.updateMany({
         where: { id: { in: courseIds } },
         data: { status: 'PUBLISHED' },
@@ -166,4 +186,3 @@ export async function PATCH(req: NextRequest) {
     );
   }
 }
-

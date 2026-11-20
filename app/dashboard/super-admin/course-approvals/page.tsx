@@ -7,17 +7,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Search,
-  Filter,
   Check,
   X,
   ExternalLink,
   ChevronDown,
-  Layers,
-  GraduationCap,
-  Sparkles,
   Loader2,
   RefreshCw,
-  Clock,
   Zap,
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
@@ -27,15 +22,28 @@ interface CourseItem {
   id: string;
   title: string;
   slug: string;
-  mentorName: string;
-  mentorAvatar: string | null;
-  specialization: string;
+  description?: string;
+  mentorName?: string;
+  mentor?: {
+    id?: string;
+    name?: string;
+    email?: string;
+    initials?: string;
+    title?: string;
+  };
+  mentorAvatar?: string | null;
+  specialization?: string;
+  codeTag?: string;
   price: number;
+  formattedPrice?: string;
   level: string;
   status: 'PENDING' | 'PUBLISHED' | 'DRAFT' | 'REJECTED';
-  modulesCount: number;
-  lessonsCount: number;
-  submittedAt: string;
+  moduleCount?: number;
+  modulesCount?: number;
+  labCount?: number;
+  lessonsCount?: number;
+  submittedAt?: string;
+  createdAt?: string;
 }
 
 function CourseApprovalsContent() {
@@ -52,24 +60,32 @@ function CourseApprovalsContent() {
   const [isBulkApproving, setIsBulkApproving] = useState(false);
   const [previewCourse, setPreviewCourse] = useState<CourseItem | null>(null);
 
+  // Helper accessors
+  const getMentorName = (c: CourseItem) => c.mentor?.name || c.mentorName || 'Instructor';
+  const getMentorInitial = (c: CourseItem) => (getMentorName(c).trim().charAt(0) || 'I').toUpperCase();
+  const getSpecialization = (c: CourseItem) => c.specialization || c.codeTag || 'FULLSTACK';
+  const getModuleCount = (c: CourseItem) => c.modulesCount ?? c.moduleCount ?? 0;
+  const getLessonCount = (c: CourseItem) => c.lessonsCount ?? c.labCount ?? 0;
+  const formatPrice = (price: number) => `Rp ${(price || 0).toLocaleString('id-ID')}`;
+
   // Fetch courses from SQLite
   const fetchCourses = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch('/api/super-admin/courses?status=ALL');
       const data = await res.json();
-      if (data.success) {
+      if (data.success && Array.isArray(data.courses)) {
         setCourses(data.courses);
         const pendingCount = data.courses.filter((c: CourseItem) => c.status === 'PENDING').length;
         setPendingApprovals(pendingCount);
       }
     } catch (err) {
       console.error('Failed to fetch courses:', err);
-      showToast('Gagal memuat antrean persetujuan kursus.');
+      showToast(language === 'id' ? 'Gagal memuat antrean persetujuan kursus.' : 'Failed to load course approvals queue.');
     } finally {
       setLoading(false);
     }
-  }, [setPendingApprovals, showToast]);
+  }, [language, setPendingApprovals, showToast]);
 
   useEffect(() => {
     fetchCourses();
@@ -78,12 +94,49 @@ function CourseApprovalsContent() {
   // Filtered courses
   const filteredCourses = useMemo(() => {
     return courses.filter((c) => {
+      const title = c.title || '';
+      const mentorName = getMentorName(c);
+      const spec = getSpecialization(c);
+
       const matchSearch =
-        c.title.toLowerCase().includes(courseSearch.toLowerCase()) ||
-        c.mentorName.toLowerCase().includes(courseSearch.toLowerCase());
-      const matchSpec =
-        courseSpecialization === 'ALL' || c.specialization === courseSpecialization;
-      return matchSearch && matchSpec;
+        title.toLowerCase().includes(courseSearch.toLowerCase()) ||
+        mentorName.toLowerCase().includes(courseSearch.toLowerCase()) ||
+        spec.toLowerCase().includes(courseSearch.toLowerCase());
+
+      if (courseSpecialization === 'ALL') return matchSearch;
+
+      const specUpper = spec.toUpperCase();
+      const titleUpper = title.toUpperCase();
+
+      if (courseSpecialization === 'BACKEND') {
+        return (
+          matchSearch &&
+          (specUpper.includes('BACKEND') ||
+            specUpper.includes('GO') ||
+            titleUpper.includes('BACKEND') ||
+            titleUpper.includes('MICROSERVICES'))
+        );
+      }
+      if (courseSpecialization === 'FRONTEND') {
+        return (
+          matchSearch &&
+          (specUpper.includes('FRONTEND') ||
+            specUpper.includes('REACT') ||
+            titleUpper.includes('FRONTEND') ||
+            titleUpper.includes('NEXT') ||
+            titleUpper.includes('UI'))
+        );
+      }
+      if (courseSpecialization === 'AI') {
+        return (
+          matchSearch &&
+          (specUpper.includes('AI') || titleUpper.includes('AI') || titleUpper.includes('AGENT'))
+        );
+      }
+      if (courseSpecialization === 'FULLSTACK') {
+        return matchSearch && (specUpper.includes('FULLSTACK') || titleUpper.includes('FULLSTACK'));
+      }
+      return matchSearch;
     });
   }, [courses, courseSearch, courseSpecialization]);
 
@@ -103,11 +156,15 @@ function CourseApprovalsContent() {
       });
       const data = await res.json();
       if (data.success) {
-        setCourses((prev) =>
-          prev.map((c) => (c.id === courseId ? { ...c, status: 'PUBLISHED' } : c))
-        );
+        setCourses((prev) => {
+          const updated = prev.map((c) =>
+            c.id === courseId ? { ...c, status: 'PUBLISHED' as const } : c
+          );
+          const newPending = updated.filter((c) => c.status === 'PENDING').length;
+          setPendingApprovals(newPending);
+          return updated;
+        });
         setSelectedCourseIds((prev) => prev.filter((id) => id !== courseId));
-        setPendingApprovals(Math.max(0, pendingCourses.length - 1));
         showToast(
           language === 'id'
             ? 'Kursus berhasil disetujui & dipublikasikan ke katalog!'
@@ -117,7 +174,7 @@ function CourseApprovalsContent() {
         showToast(data.message || 'Gagal menyetujui kursus.');
       }
     } catch {
-      showToast('Terjadi kesalahan jaringan.');
+      showToast(language === 'id' ? 'Terjadi kesalahan jaringan.' : 'Network error.');
     } finally {
       setIsApproving((prev) => ({ ...prev, [courseId]: false }));
     }
@@ -134,19 +191,25 @@ function CourseApprovalsContent() {
       });
       const data = await res.json();
       if (data.success) {
-        setCourses((prev) =>
-          prev.map((c) => (c.id === courseId ? { ...c, status: 'REJECTED' } : c))
-        );
+        setCourses((prev) => {
+          const updated = prev.map((c) =>
+            c.id === courseId ? { ...c, status: 'REJECTED' as const } : c
+          );
+          const newPending = updated.filter((c) => c.status === 'PENDING').length;
+          setPendingApprovals(newPending);
+          return updated;
+        });
         setSelectedCourseIds((prev) => prev.filter((id) => id !== courseId));
-        setPendingApprovals(Math.max(0, pendingCourses.length - 1));
         showToast(
           language === 'id'
             ? 'Kursus ditolak dan dikembalikan ke draf instruktur.'
             : 'Course rejected and returned to instructor drafts.'
         );
+      } else {
+        showToast(data.message || 'Gagal menolak kursus.');
       }
     } catch {
-      showToast('Gagal menolak kursus.');
+      showToast(language === 'id' ? 'Gagal menolak kursus.' : 'Failed to reject course.');
     } finally {
       setIsApproving((prev) => ({ ...prev, [courseId]: false }));
     }
@@ -160,25 +223,29 @@ function CourseApprovalsContent() {
       const res = await fetch('/api/super-admin/courses', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseIds: selectedCourseIds, action: 'BULK_APPROVE' }),
+        body: JSON.stringify({ courseIds: selectedCourseIds, action: 'bulk-approve' }),
       });
       const data = await res.json();
       if (data.success) {
-        setCourses((prev) =>
-          prev.map((c) =>
-            selectedCourseIds.includes(c.id) ? { ...c, status: 'PUBLISHED' } : c
-          )
-        );
-        setPendingApprovals(Math.max(0, pendingCourses.length - selectedCourseIds.length));
+        setCourses((prev) => {
+          const updated = prev.map((c) =>
+            selectedCourseIds.includes(c.id) ? { ...c, status: 'PUBLISHED' as const } : c
+          );
+          const newPending = updated.filter((c) => c.status === 'PENDING').length;
+          setPendingApprovals(newPending);
+          return updated;
+        });
         showToast(
           language === 'id'
             ? `${selectedCourseIds.length} kursus berhasil dipublikasikan!`
             : `Successfully approved ${selectedCourseIds.length} courses!`
         );
         setSelectedCourseIds([]);
+      } else {
+        showToast(data.message || 'Gagal memproses bulk approval.');
       }
     } catch {
-      showToast('Gagal memproses bulk approval.');
+      showToast(language === 'id' ? 'Gagal memproses bulk approval.' : 'Failed to bulk approve.');
     } finally {
       setIsBulkApproving(false);
     }
@@ -188,15 +255,11 @@ function CourseApprovalsContent() {
     const pendingIds = filteredCourses
       .filter((c) => c.status === 'PENDING')
       .map((c) => c.id);
-    if (selectedCourseIds.length === pendingIds.length) {
+    if (selectedCourseIds.length === pendingIds.length && pendingIds.length > 0) {
       setSelectedCourseIds([]);
     } else {
       setSelectedCourseIds(pendingIds);
     }
-  };
-
-  const formatPrice = (price: number) => {
-    return `Rp ${price.toLocaleString('id-ID')}`;
   };
 
   return (
@@ -229,7 +292,9 @@ function CourseApprovalsContent() {
           </button>
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-xl text-xs font-bold text-[#2563EB]">
             <BookOpen className="w-4 h-4" />
-            <span>{pendingCourses.length} {sa.approvals.awaitingBadge}</span>
+            <span>
+              {pendingCourses.length} {sa.approvals.awaitingBadge}
+            </span>
           </div>
         </div>
       </div>
@@ -279,7 +344,9 @@ function CourseApprovalsContent() {
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isBulkApproving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                <span>{sa.approvals.bulkApprove} ({selectedCourseIds.length})</span>
+                <span>
+                  {sa.approvals.bulkApprove} ({selectedCourseIds.length})
+                </span>
               </button>
             </div>
           )}
@@ -294,9 +361,8 @@ function CourseApprovalsContent() {
                   <input
                     type="checkbox"
                     checked={
-                      filteredCourses.filter((c) => c.status === 'PENDING').length > 0 &&
-                      selectedCourseIds.length ===
-                        filteredCourses.filter((c) => c.status === 'PENDING').length
+                      pendingCourses.length > 0 &&
+                      selectedCourseIds.length === pendingCourses.length
                     }
                     onChange={handleSelectAllPending}
                     className="rounded border-slate-300 text-[#2563EB] focus:ring-[#2563EB]/20 cursor-pointer"
@@ -334,6 +400,9 @@ function CourseApprovalsContent() {
                 filteredCourses.map((c) => {
                   const isSelected = selectedCourseIds.includes(c.id);
                   const isProcessing = isApproving[c.id];
+                  const mentorName = getMentorName(c);
+                  const initial = getMentorInitial(c);
+                  const spec = getSpecialization(c);
 
                   return (
                     <tr
@@ -365,7 +434,10 @@ function CourseApprovalsContent() {
                       {/* Course Title & Code */}
                       <td className="py-3.5 px-4 font-medium text-slate-800">
                         <div className="flex flex-col">
-                          <span className="font-bold text-[#0F172A] text-xs hover:text-[#2563EB] transition cursor-pointer">
+                          <span
+                            onClick={() => setPreviewCourse(c)}
+                            className="font-bold text-[#0F172A] text-xs hover:text-[#2563EB] transition cursor-pointer"
+                          >
                             {c.title}
                           </span>
                           <span className="text-[10px] text-slate-400 font-mono mt-0.5">
@@ -378,12 +450,12 @@ function CourseApprovalsContent() {
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold">
-                            {c.mentorName.charAt(0)}
+                            {initial}
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-800 text-xs">{c.mentorName}</p>
+                            <p className="font-semibold text-slate-800 text-xs">{mentorName}</p>
                             <span className="text-[10px] font-bold text-[#2563EB] bg-blue-50 px-1.5 py-0.2 rounded">
-                              {c.specialization}
+                              {spec}
                             </span>
                           </div>
                         </div>
@@ -392,7 +464,7 @@ function CourseApprovalsContent() {
                       {/* Curriculum Stats */}
                       <td className="py-3.5 px-4">
                         <span className="text-slate-600 font-mono text-xs">
-                          {c.modulesCount} mod • {c.lessonsCount} lessons
+                          {getModuleCount(c)} mod • {getLessonCount(c)} lessons
                         </span>
                       </td>
 
@@ -485,13 +557,13 @@ function CourseApprovalsContent() {
               <div className="flex items-start justify-between pb-4 border-b border-slate-100">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                    {previewCourse.specialization} • {previewCourse.level}
+                    {getSpecialization(previewCourse)} • {previewCourse.level}
                   </span>
                   <h3 className="text-lg font-extrabold text-[#0F172A] mt-2">
                     {previewCourse.title}
                   </h3>
                   <p className="text-xs text-slate-400 font-mono mt-0.5">
-                    Instructor: {previewCourse.mentorName}
+                    Instructor: {getMentorName(previewCourse)}
                   </p>
                 </div>
                 <button
@@ -505,11 +577,11 @@ function CourseApprovalsContent() {
               <div className="py-4 space-y-3 text-xs text-slate-600">
                 <div className="flex justify-between py-1.5 border-b border-slate-100">
                   <span className="font-semibold text-slate-500">Modules Count:</span>
-                  <span className="font-bold text-[#0F172A]">{previewCourse.modulesCount} Chapters</span>
+                  <span className="font-bold text-[#0F172A]">{getModuleCount(previewCourse)} Chapters</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-100">
                   <span className="font-semibold text-slate-500">Total Lessons:</span>
-                  <span className="font-bold text-[#0F172A]">{previewCourse.lessonsCount} Video & Interactive</span>
+                  <span className="font-bold text-[#0F172A]">{getLessonCount(previewCourse)} Video & Interactive</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-100">
                   <span className="font-semibold text-slate-500">Standard Tuition:</span>
@@ -544,4 +616,3 @@ export default function CourseApprovalsPage() {
     </Suspense>
   );
 }
-
